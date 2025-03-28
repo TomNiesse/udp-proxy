@@ -86,7 +86,7 @@ void TCPClient::disconnect(const size_t connectionId)
 {
     const QMutexLocker lock(&this->lock);
 
-    // Ensure the connection exists
+    // Make sure the connection exists
     if(this->tcpConnections.find(connectionId) != this->tcpConnections.end())
     {
         // Close the connection
