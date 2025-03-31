@@ -66,10 +66,17 @@ void ProxyServer::incomingConnection(const qintptr socketDescriptor)
             {
                 while(proxyServerSocket.bytesAvailable())
                 {
-                    const auto payload = proxyServerSocket.readAll();
-                    QTimer::singleShot(0, this, [this, connectionId, payload](){
-                        this->tcpConnectionManager->write(connectionId, payload);
-                    });
+                    if(proxyServerSocket.state() == QAbstractSocket::ConnectedState)
+                    {
+                        const auto payload = proxyServerSocket.readAll();
+                        QTimer::singleShot(0, this, [this, connectionId, payload](){
+                            this->tcpConnectionManager->write(connectionId, payload);
+                        });
+                    }
+                    else
+                    {
+                        break;
+                    }
                 }
             }
             else

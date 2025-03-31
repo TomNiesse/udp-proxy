@@ -80,7 +80,6 @@ void TCPProxyConnectionManager::handleReceivedBytes(const QByteArray payload)
         QTimer::singleShot(0, this, [this, connectionId](){
             emit this->connected(connectionId);
         });
-
         break;
     case TCPTunnelPacketHeaderType::TCP_RESPONSE_CLOSED_CONNECTION:
         QTimer::singleShot(0, this, [this, connectionId](){
