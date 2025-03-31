@@ -32,6 +32,7 @@ add_executable(udpproxy
   tcpclient.h tcpclient.cpp
   udptunnelpacketsender.h udptunnelpacketsender.cpp
   udptunnelpacketreceiver.h udptunnelpacketreceiver.cpp
+  version.h
 
 )
 target_link_libraries(udpproxy Qt${QT_VERSION_MAJOR}::Core Qt${QT_VERSION_MAJOR}::Network)
