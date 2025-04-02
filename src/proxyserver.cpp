@@ -89,7 +89,7 @@ void ProxyServer::incomingConnection(const qintptr socketDescriptor)
                     const auto host = hostAndPort.first;
                     const auto port = hostAndPort.second;
                     QTimer::singleShot(0, this, [this, connectionId, host, port](){
-                        this->tcpConnectionManager->connectToHost(connectionId, QByteArray(host.toStdString()), port);
+                        this->tcpConnectionManager->connectToHost(connectionId, QByteArray(host.toStdString().c_str(), host.size()), port);
                     });
                 }
                 else
