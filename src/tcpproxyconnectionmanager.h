@@ -10,22 +10,22 @@ class TCPProxyConnectionManager : public QObject
     Q_OBJECT
     Q_DISABLE_COPY_MOVE(TCPProxyConnectionManager)
 public:
-    TCPProxyConnectionManager(const UDPTunnelConnectionSettings udpTunnelConnectionSettings);
+    explicit TCPProxyConnectionManager(const UDPTunnelConnectionSettings& udpTunnelConnectionSettings);
     ~TCPProxyConnectionManager();
 
 public slots:
-    void connectToHost(const size_t connectionId, const QByteArray host, const quint16 port);
-    void write(const size_t connectionId, const QByteArray payload);
-    void disconnect(const size_t connectionId);
+    void connectToHost(const size_t& connectionId, const QByteArray& host, const quint16& port);
+    void write(const size_t& connectionId, const QByteArray& payload);
+    void disconnect(const size_t& connectionId);
 
 signals:
-    void connected(const size_t connectionId);
-    void disconnected(const size_t connectionId);
-    void bytesWritten(const size_t connectionId);
-    void bytesReceived(const size_t connectionId, const QByteArray payload);
+    void connected(const size_t& connectionId);
+    void disconnected(const size_t& connectionId);
+    void bytesWritten(const size_t& connectionId);
+    void bytesReceived(const size_t& connectionId, const QByteArray& payload);
 
 private:
-    void handleReceivedBytes(const QByteArray payload);
+    void handleReceivedBytes(const QByteArray& packet);
     std::unique_ptr<UDPTunnelConnection> udpTunnelConnection;
     QMutex lock;
 };

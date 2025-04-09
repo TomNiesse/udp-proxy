@@ -9,7 +9,7 @@ class ProxyClient : public QObject
     Q_OBJECT
     Q_DISABLE_COPY_MOVE(ProxyClient)
 public:
-    ProxyClient(const UDPTunnelConnectionSettings udpTunnelConnectionSettings);
+    explicit ProxyClient(const UDPTunnelConnectionSettings& udpTunnelConnectionSettings);
     ~ProxyClient();
 
 private:

@@ -10,12 +10,12 @@ TCPClient::TCPClient()
 
 }
 
-void TCPClient::handleUdpTunnelPacket(const QByteArray packet)
+void TCPClient::handleUdpTunnelPacket(const QByteArray& packet)
 {
     const QMutexLocker lock(&this->lock);
 
-    const auto decodedData = TCPTunnelPacket::decode(packet);
-    auto header = decodedData.first;
+    const auto& decodedData = TCPTunnelPacket::decode(packet);
+    const auto& header = decodedData.first;
     const auto& packetType = header.getPacketType();
     const auto& connectionId = header.getConnectionId();
     const auto& host = header.getHost();
@@ -44,7 +44,7 @@ void TCPClient::handleUdpTunnelPacket(const QByteArray packet)
     }
 }
 
-void TCPClient::connectToHost(const size_t connectionId, const QString address, const quint16 port)
+void TCPClient::connectToHost(const size_t& connectionId, const QString& address, const quint16& port)
 {
     const QMutexLocker lock(&this->lock);
 
@@ -68,10 +68,9 @@ void TCPClient::connectToHost(const size_t connectionId, const QString address, 
             });
         });
         QObject::connect(this->tcpConnections.at(connectionId).get(), &QTcpSocket::readyRead, this, [this, connectionId](){
-            QByteArray packet;
             while(this->tcpConnections.at(connectionId).get()->bytesAvailable())
             {
-                packet = this->tcpConnections.at(connectionId)->readAll();
+                const QByteArray& packet = this->tcpConnections.at(connectionId)->readAll();
                 QTimer::singleShot(0, this, [this, connectionId, packet](){
                     emit this->bytesReceived(connectionId, packet);
                 });
@@ -80,11 +79,12 @@ void TCPClient::connectToHost(const size_t connectionId, const QString address, 
 
         this->tcpConnections.at(connectionId)->setSocketOption(QAbstractSocket::LowDelayOption, 1);
         this->tcpConnections.at(connectionId)->setSocketOption(QAbstractSocket::KeepAliveOption, 1);
+        this->tcpConnections.at(connectionId)->setReadBufferSize(2048); // 2KiB
         this->tcpConnections.at(connectionId)->connectToHost(address, port);
     }
 }
 
-void TCPClient::disconnect(const size_t connectionId)
+void TCPClient::disconnect(const size_t& connectionId)
 {
     const QMutexLocker lock(&this->lock);
 
@@ -101,7 +101,7 @@ void TCPClient::disconnect(const size_t connectionId)
     }
 }
 
-void TCPClient::write(const size_t connectionId, const QByteArray packet)
+void TCPClient::write(const size_t& connectionId, const QByteArray& packet)
 {
     const QMutexLocker lock(&this->lock);
 

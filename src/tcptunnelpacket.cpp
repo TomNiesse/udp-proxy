@@ -1,6 +1,6 @@
 #include "tcptunnelpacket.h"
 
-const QByteArray TCPTunnelPacket::encode(TCPTunnelPacketHeader header, QByteArray payload)
+const QByteArray TCPTunnelPacket::encode(TCPTunnelPacketHeader& header, const QByteArray& payload)
 {
     QByteArray out;
     out.push_back(header.encode());
@@ -8,10 +8,10 @@ const QByteArray TCPTunnelPacket::encode(TCPTunnelPacketHeader header, QByteArra
     return out;
 }
 
-const std::pair<TCPTunnelPacketHeader, QByteArray> TCPTunnelPacket::decode(const QByteArray encodedData)
+const std::pair<TCPTunnelPacketHeader, QByteArray> TCPTunnelPacket::decode(const QByteArray& encodedData)
 {
-    const qsizetype headerSize = TCPTunnelPacketHeader::headerSize(encodedData);
-    const qsizetype minimalHeaderSize = TCPTunnelPacketHeader::minimalHeaderSize();
+    const qsizetype& headerSize = TCPTunnelPacketHeader::headerSize(encodedData);
+    const qsizetype& minimalHeaderSize = TCPTunnelPacketHeader::minimalHeaderSize();
 
     if(encodedData.size() < minimalHeaderSize)
     {
@@ -20,7 +20,7 @@ const std::pair<TCPTunnelPacketHeader, QByteArray> TCPTunnelPacket::decode(const
         return std::make_pair(header, QByteArray());
     }
 
-    TCPTunnelPacketHeader header(encodedData);
-    QByteArray payload = encodedData.mid(headerSize);
+    const TCPTunnelPacketHeader header(encodedData);
+    const QByteArray& payload = encodedData.mid(headerSize);
     return std::make_pair(header, payload);
 }

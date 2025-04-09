@@ -11,8 +11,8 @@ class UDPTunnelPacketSender : public QObject
 {
     Q_OBJECT
 public:
-    UDPTunnelPacketSender(const QHostAddress listenAddress, const quint16 listenPort, const QHostAddress egressAddress, const quint16 egressPort);
-    void write(const QByteArray packet);
+    explicit UDPTunnelPacketSender(const QHostAddress& listenAddress, const quint16& listenPort, const QHostAddress& egressAddress, const quint16& egressPort);
+    void write(const QByteArray& packet);
 
 signals:
     void receivedResponse();

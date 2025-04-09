@@ -18,21 +18,21 @@ typedef enum UDPTunnelPacketType
 class UDPTunnelPacketHeader
 {
 public:
-    UDPTunnelPacketHeader();
-    UDPTunnelPacketHeader(const QByteArray data);
+    explicit UDPTunnelPacketHeader();
+    explicit UDPTunnelPacketHeader(const QByteArray& data);
     const QByteArray encode() const;
 
     const UDPTunnelPacketType& getPacketType() const;
-    void setPacketType(const UDPTunnelPacketType packetType);
+    void setPacketType(const UDPTunnelPacketType& packetType);
     const bool& getLastSegment() const;
-    void setLastSegment(const bool lastSegment);
+    void setLastSegment(const bool& lastSegment);
     const size_t& getPacketId() const;
-    void setPacketId(const size_t packetId);
+    void setPacketId(const size_t& packetId);
     const size_t& getChunkId() const;
-    void setChunkId(const size_t chunkId);
+    void setChunkId(const size_t& chunkId);
     static qsizetype getHeaderSize();
 protected:
-    static const QByteArray encode(UDPTunnelPacketType packetType, const bool lastSegment, const size_t packetId, const size_t chunkId);
+    static const QByteArray encode(const UDPTunnelPacketType& packetType, const bool& lastSegment, const size_t& packetId, const size_t& chunkId);
     static const std::tuple<UDPTunnelPacketType, bool, size_t, size_t> decode(const QByteArray& data);
 private:
     UDPTunnelPacketType packetType = UDPTunnelPacketType::INVALID;

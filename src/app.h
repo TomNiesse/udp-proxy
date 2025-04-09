@@ -12,7 +12,7 @@ class App : public QCoreApplication
     Q_OBJECT
     Q_DISABLE_COPY_MOVE(App)
 public:
-    App(int& argc, char** argv);
+    explicit App(int& argc, char** argv);
     void initialize();
     void parseCommandLineOptions();
 

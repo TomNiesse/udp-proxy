@@ -25,14 +25,14 @@ class UDPTunnelConnection : public QObject
     Q_OBJECT
     Q_DISABLE_COPY_MOVE(UDPTunnelConnection)
 public:
-    UDPTunnelConnection(const UDPTunnelConnectionSettings connectionSettings, const QString name = "UDPTunnelConnection");
-    void send(const QByteArray payload);
+    explicit UDPTunnelConnection(const UDPTunnelConnectionSettings& connectionSettings, const QString& name = "UDPTunnelConnection");
+    void send(const QByteArray& payload);
 
     const std::unique_ptr<UDPTunnelPacketSender>& getSender();
     const std::unique_ptr<UDPTunnelPacketReceiver>& getReceiver();
 
 signals:
-    void bytesReceived(const QByteArray payload);
+    void bytesReceived(const QByteArray& payload);
 
 private:
     QString name;

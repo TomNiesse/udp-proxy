@@ -10,13 +10,13 @@ class UDPTunnelPacketReceiver : public QObject
     Q_OBJECT
     Q_DISABLE_COPY_MOVE(UDPTunnelPacketReceiver)
 public:
-    UDPTunnelPacketReceiver(const QHostAddress listenAddress, const quint16 listenPort, const QHostAddress egressAddress, const quint16 egressPort);
+    explicit UDPTunnelPacketReceiver(const QHostAddress& listenAddress, const quint16& listenPort, const QHostAddress& egressAddress, const quint16& egressPort);
 
 signals:
-    void bytesReceived(const QByteArray bytes);
+    void bytesReceived(const QByteArray& bytes);
 
 private slots:
-    void handleReceivedBytes(const QByteArray message);
+    void handleReceivedBytes(const QByteArray& message);
 
 private:
     void receiveThread();

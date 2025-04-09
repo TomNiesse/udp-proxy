@@ -1,7 +1,7 @@
 #include "proxyrequest.h"
 #include <QDebug>
 
-bool ProxyRequest::validate(const QString proxyRequest)
+bool ProxyRequest::validate(const QString& proxyRequest)
 {
     // Check if the request contains at least a command and a hostname:port combination
     const QStringList proxyRequestSplit = proxyRequest.split(" ");
@@ -18,7 +18,7 @@ bool ProxyRequest::validate(const QString proxyRequest)
     return false;
 }
 
-const QString ProxyRequest::extractCommand(const QString proxyRequest)
+const QString ProxyRequest::extractCommand(const QString& proxyRequest)
 {
     for(qsizetype pos = 0; pos < proxyRequest.length(); pos++)
     {
@@ -31,16 +31,16 @@ const QString ProxyRequest::extractCommand(const QString proxyRequest)
     return "";
 }
 
-const std::pair<QString, quint16> ProxyRequest::extractHostAndPort(const QString proxyRequest)
+const std::pair<QString, quint16> ProxyRequest::extractHostAndPort(const QString& proxyRequest)
 {
     // Extract the host:port combo first
-    QStringList proxyRequestSplit = proxyRequest.split(" ");
-    QString hostAndPort = proxyRequestSplit[1];
+    const QStringList& proxyRequestSplit = proxyRequest.split(" ");
+    const QString& hostAndPort = proxyRequestSplit[1];
 
     // Split the hostname and port
-    QStringList hostAndPortSplit = hostAndPort.split(":");
-    QString host = hostAndPortSplit[0];
-    quint16 port = static_cast<quint16>(hostAndPortSplit[1].toInt());
+    const QStringList& hostAndPortSplit = hostAndPort.split(":");
+    const QString& host = hostAndPortSplit[0];
+    const quint16& port = static_cast<quint16>(hostAndPortSplit[1].toInt());
 
     return std::make_pair(host, port);
 }

@@ -8,7 +8,7 @@
 #include <QThread>
 #include <QTimer>
 
-TCPProxyConnectionManager::TCPProxyConnectionManager(const UDPTunnelConnectionSettings udpTunnelConnectionSettings)
+TCPProxyConnectionManager::TCPProxyConnectionManager(const UDPTunnelConnectionSettings& udpTunnelConnectionSettings)
 {
     const QMutexLocker lock(&this->lock);
 
@@ -18,10 +18,12 @@ TCPProxyConnectionManager::TCPProxyConnectionManager(const UDPTunnelConnectionSe
 
 TCPProxyConnectionManager::~TCPProxyConnectionManager()
 {
+    const QMutexLocker lock(&this->lock);
+
     QObject::disconnect(this->udpTunnelConnection.get(), &UDPTunnelConnection::bytesReceived, this, nullptr);
 }
 
-void TCPProxyConnectionManager::connectToHost(const size_t connectionId, const QByteArray host, const quint16 port)
+void TCPProxyConnectionManager::connectToHost(const size_t& connectionId, const QByteArray& host, const quint16& port)
 {
     const QMutexLocker lock(&this->lock);
 
@@ -37,7 +39,7 @@ void TCPProxyConnectionManager::connectToHost(const size_t connectionId, const Q
     });
 }
 
-void TCPProxyConnectionManager::write(const size_t connectionId, const QByteArray payload)
+void TCPProxyConnectionManager::write(const size_t& connectionId, const QByteArray& payload)
 {
     const QMutexLocker lock(&this->lock);
 
@@ -45,13 +47,13 @@ void TCPProxyConnectionManager::write(const size_t connectionId, const QByteArra
     header.setPacketType(TCPTunnelPacketHeaderType::TCP_COMMAND_SEND_DATA);
     header.setConnectionId(connectionId);
 
-    const auto encodedData = TCPTunnelPacket::encode(header, payload);
+    const auto& encodedData = TCPTunnelPacket::encode(header, payload);
     QTimer::singleShot(0, this, [this, encodedData](){
         this->udpTunnelConnection->send(encodedData);
     });
 }
 
-void TCPProxyConnectionManager::disconnect(const size_t connectionId)
+void TCPProxyConnectionManager::disconnect(const size_t& connectionId)
 {
     const QMutexLocker lock(&this->lock);
 
@@ -59,7 +61,7 @@ void TCPProxyConnectionManager::disconnect(const size_t connectionId)
     header.setPacketType(TCPTunnelPacketHeaderType::TCP_COMMAND_CLOSE_CONNECTION);
     header.setConnectionId(connectionId);
 
-    const auto encodedData = TCPTunnelPacket::encode(header, {});
+    const auto& encodedData = TCPTunnelPacket::encode(header, {});
     QTimer::singleShot(0, this, [this, encodedData](){
         this->udpTunnelConnection->send(encodedData);
     });
@@ -67,12 +69,12 @@ void TCPProxyConnectionManager::disconnect(const size_t connectionId)
 
 // Private
 
-void TCPProxyConnectionManager::handleReceivedBytes(const QByteArray payload)
+void TCPProxyConnectionManager::handleReceivedBytes(const QByteArray& packet)
 {
-    const auto decodedPacket = TCPTunnelPacket::decode(payload);
-    auto packetHeader = decodedPacket.first;
-    const auto connectionId = packetHeader.getConnectionId();
-    const auto _payload = decodedPacket.second;
+    const auto& decodedPacket = TCPTunnelPacket::decode(packet);
+    const auto& packetHeader = decodedPacket.first;
+    const auto& connectionId = packetHeader.getConnectionId();
+    const auto& payload = decodedPacket.second;
 
     switch(packetHeader.getPacketType())
     {
@@ -87,8 +89,8 @@ void TCPProxyConnectionManager::handleReceivedBytes(const QByteArray payload)
         });
         break;
     case TCPTunnelPacketHeaderType::TCP_RESPONSE_RECEIVED_DATA:
-        QTimer::singleShot(0, this, [this, connectionId, _payload](){
-            emit this->bytesReceived(connectionId, _payload);
+        QTimer::singleShot(0, this, [this, connectionId, payload](){
+            emit this->bytesReceived(connectionId, payload);
         });
         break;
     case TCPTunnelPacketHeaderType::TCP_RESPONSE_SENT_DATA:

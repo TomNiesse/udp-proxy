@@ -5,7 +5,7 @@
 
 UDPTunnelPacketChunkMananger::UDPTunnelPacketChunkMananger() {}
 
-void UDPTunnelPacketChunkMananger::addChunk(const UDPTunnelPacket chunk)
+void UDPTunnelPacketChunkMananger::addChunk(const UDPTunnelPacket& chunk)
 {
     const QMutexLocker lock(&this->lock);
 
@@ -25,12 +25,12 @@ void UDPTunnelPacketChunkMananger::addChunk(const UDPTunnelPacket chunk)
     }
 }
 
-const std::vector<QByteArray> UDPTunnelPacketChunkMananger::split(const QByteArray payload, const size_t chunkSize)
+const std::vector<QByteArray> UDPTunnelPacketChunkMananger::split(const QByteArray& payload, const size_t& chunkSize)
 {
     return UDPTunnelPacket::split(payload, chunkSize);
 }
 
-const QByteArray UDPTunnelPacketChunkMananger::convertChunksToPayload(const size_t packetId)
+const QByteArray UDPTunnelPacketChunkMananger::convertChunksToPayload(const size_t& packetId)
 {
     const QMutexLocker lock(&this->lock);
 
@@ -40,7 +40,7 @@ const QByteArray UDPTunnelPacketChunkMananger::convertChunksToPayload(const size
     }
 
     QByteArray out;
-    const auto chunks = this->chunks.at(packetId);
+    const auto& chunks = this->chunks.at(packetId);
     for(const auto& chunk : chunks)
     {
         out.append(chunk.getPayload());
@@ -53,17 +53,19 @@ const QByteArray UDPTunnelPacketChunkMananger::convertChunksToPayload(const size
 
 // Private
 
-bool UDPTunnelPacketChunkMananger::chunkAlreadyExists(const UDPTunnelPacket chunk)
+bool UDPTunnelPacketChunkMananger::chunkAlreadyExists(const UDPTunnelPacket& chunk)
 {
-    const auto packetId = chunk.getHeader().getPacketId();
-    const auto chunkId = chunk.getHeader().getChunkId();
+    const auto& chunkHeader = chunk.getHeader();
+    const auto packetId = chunkHeader.getPacketId();
+    const auto chunkId = chunkHeader.getChunkId();
 
     if(this->chunks.find(packetId) != this->chunks.end())
     {
-        const auto bufferedChunks = this->chunks.at(packetId);
+        const auto& bufferedChunks = this->chunks.at(packetId);
         for(const auto& bufferedChunk : bufferedChunks)
         {
-            if(bufferedChunk.getHeader().getPacketId() == packetId && bufferedChunk.getHeader().getChunkId() == chunkId)
+            const auto& bufferedChunkHeader = bufferedChunk.getHeader();
+            if(bufferedChunkHeader.getPacketId() == packetId && bufferedChunkHeader.getChunkId() == chunkId)
             {
                 return true;
             }

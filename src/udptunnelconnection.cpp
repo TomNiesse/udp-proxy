@@ -9,7 +9,7 @@
 #include <QDateTime>
 #include <QTimer>
 
-UDPTunnelConnection::UDPTunnelConnection(const UDPTunnelConnectionSettings connectionSettings, const QString name)
+UDPTunnelConnection::UDPTunnelConnection(const UDPTunnelConnectionSettings& connectionSettings, const QString& name)
 {
     const QMutexLocker lock(&this->lock);
 
@@ -28,31 +28,29 @@ UDPTunnelConnection::UDPTunnelConnection(const UDPTunnelConnectionSettings conne
     this->sender = std::make_unique<UDPTunnelPacketSender>(senderIngressAddress, senderIngressPort, senderEgressAddress, senderEgressPort);
     this->receiver = std::make_unique<UDPTunnelPacketReceiver>(receiverIngressAddress, receiverIngressPort, receiverEgressAddress, receiverEgressPort);
 
-    connect(this->receiver.get(), &UDPTunnelPacketReceiver::bytesReceived, this, [this](const QByteArray bytes){
+    connect(this->receiver.get(), &UDPTunnelPacketReceiver::bytesReceived, this, [this](const QByteArray& bytes){
         emit this->bytesReceived(bytes);
     });
 }
 
-void UDPTunnelConnection::send(const QByteArray payload)
+void UDPTunnelConnection::send(const QByteArray& payload)
 {
     const QMutexLocker lock(&this->lock);
 
     // Split the payload into chunks
-    const auto payloadChunks = UDPTunnelPacket::split(payload, UDPTUNNEL_PAYLOAD_SIZE);
+    const auto& payloadChunks = UDPTunnelPacket::split(payload, UDPTUNNEL_PAYLOAD_SIZE);
     UDPTunnelPacketHeader header;
     header.setPacketType(UDPTunnelPacketType::UDP_DATA);
     header.setPacketId(this->packetId++);
     header.setChunkId(0);
     header.setLastSegment(false);
-    const auto encodedChunks = UDPTunnelPacket::addHeaders(header, payloadChunks);
+    const auto& encodedChunks = UDPTunnelPacket::addHeaders(header, payloadChunks);
     this->packetId += encodedChunks.size();
 
     QTimer::singleShot(0, this, [this, encodedChunks](){
-        for(size_t chunkId = 0; chunkId < encodedChunks.size(); chunkId++)
+        for (const auto& encodedChunk : encodedChunks)
         {
-            const auto chunk = encodedChunks.at(chunkId);
-            // Send the chunks
-            this->sender->write(chunk);
+            this->sender->write(encodedChunk);
         }
     });
 

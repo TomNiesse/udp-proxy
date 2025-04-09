@@ -6,7 +6,7 @@
 #include <QTimer>
 #include <QDateTime>
 
-UDPTunnelPacketReceiver::UDPTunnelPacketReceiver(const QHostAddress listenAddress, const quint16 listenPort, const QHostAddress egressAddress, const quint16 egressPort)
+UDPTunnelPacketReceiver::UDPTunnelPacketReceiver(const QHostAddress& listenAddress, const quint16& listenPort, const QHostAddress& egressAddress, const quint16& egressPort)
 {
     this->listenAddress = listenAddress;
     this->listenPort = listenPort;
@@ -18,7 +18,7 @@ UDPTunnelPacketReceiver::UDPTunnelPacketReceiver(const QHostAddress listenAddres
 
 // Private
 
-void UDPTunnelPacketReceiver::handleReceivedBytes(const QByteArray message)
+void UDPTunnelPacketReceiver::handleReceivedBytes(const QByteArray& message)
 {
     auto packet = UDPTunnelPacket(message);
     auto header = packet.getHeader();
@@ -56,7 +56,7 @@ void UDPTunnelPacketReceiver::handleReceivedBytes(const QByteArray message)
 
     // Send a response
     packet.setHeader(header);
-    const auto encodedPacket = packet.encode();
+    const auto& encodedPacket = packet.encode();
     egressSocket.writeDatagram(encodedPacket, encodedPacket.size(), this->egressAddress, this->egressPort);
     egressSocket.flush();
 }
@@ -64,7 +64,7 @@ void UDPTunnelPacketReceiver::handleReceivedBytes(const QByteArray message)
 void UDPTunnelPacketReceiver::receiveThread()
 {
     QUdpSocket ingressSocket;
-    const bool listeningForTraffic = ingressSocket.bind(this->listenAddress, this->listenPort);
+    const bool& listeningForTraffic = ingressSocket.bind(this->listenAddress, this->listenPort);
     if(!listeningForTraffic)
     {
         qDebug() << QString("Could not open %1:%2. Exiting").arg(this->listenAddress.toString()).arg(this->listenPort);
@@ -75,10 +75,10 @@ void UDPTunnelPacketReceiver::receiveThread()
     {
         if(ingressSocket.waitForReadyRead())
         {
-            while(ingressSocket.hasPendingDatagrams())
+            if(ingressSocket.hasPendingDatagrams())
             {
-                const auto datagram = ingressSocket.receiveDatagram();
-                const auto message = datagram.data();
+                const auto& datagram = ingressSocket.receiveDatagram();
+                const auto& message = datagram.data();
                 this->handleReceivedBytes(message);
             }
         }

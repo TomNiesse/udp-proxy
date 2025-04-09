@@ -9,8 +9,8 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-set(CMAKE_CXX_FLAGS "-Ofast -Wall -Wextra -Wconversion -Werror -Wpedantic")
-set(CMAKE_CXX_FLAGS_DEBUG "-Ofast -Wall -Wextra -Wconversion -Werror -Wpedantic")
+set(CMAKE_CXX_FLAGS "-Ofast -pipe -Wall -Wextra -Wconversion -Werror -Wpedantic")
+set(CMAKE_CXX_FLAGS_DEBUG "-Ofast -pipe -Wall -Wextra -Wconversion -Werror -Wpedantic")
 
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Core Network)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Network)

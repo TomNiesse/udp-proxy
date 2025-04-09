@@ -10,7 +10,7 @@
 #include <QTimer>
 #include <QEventLoop>
 
-ProxyServer::ProxyServer(const UDPTunnelConnectionSettings udpTunnelConnectionSettings)
+ProxyServer::ProxyServer(const UDPTunnelConnectionSettings& udpTunnelConnectionSettings)
 {
     this->tcpConnectionManager = std::make_unique<TCPProxyConnectionManager>(udpTunnelConnectionSettings);
 }
@@ -25,10 +25,11 @@ void ProxyServer::incomingConnection(const qintptr socketDescriptor)
         QTcpSocket proxyServerSocket;
         proxyServerSocket.setSocketOption(QAbstractSocket::LowDelayOption, 1);
         proxyServerSocket.setSocketOption(QAbstractSocket::KeepAliveOption, 1);
+        proxyServerSocket.setReadBufferSize(2048); // 2KiB
         proxyServerSocket.setSocketDescriptor(socketDescriptor);
 
         // Connect to the signals that TCPProxyConnectionManager provides
-        QObject::connect(this->tcpConnectionManager.get(), &TCPProxyConnectionManager::connected, this, [this, connectionId, &connectionActive, &proxyServerSocket](const size_t _connectionId){
+        QObject::connect(this->tcpConnectionManager.get(), &TCPProxyConnectionManager::connected, this, [this, connectionId, &connectionActive, &proxyServerSocket](const size_t& _connectionId){
             if(_connectionId == connectionId)
             {
                 connectionActive = true;
@@ -42,13 +43,13 @@ void ProxyServer::incomingConnection(const qintptr socketDescriptor)
                 });
             }
         });
-        QObject::connect(this->tcpConnectionManager.get(), &TCPProxyConnectionManager::disconnected, this, [this, connectionId, &connectionActive](const size_t _connectionId){
+        QObject::connect(this->tcpConnectionManager.get(), &TCPProxyConnectionManager::disconnected, this, [this, connectionId, &connectionActive](const size_t& _connectionId){
             if(_connectionId == connectionId)
             {
                 connectionActive = false;
             }
         });
-        QObject::connect(this->tcpConnectionManager.get(), &TCPProxyConnectionManager::bytesReceived, this, [this, connectionId, &proxyServerSocket](const size_t _connectionId, const QByteArray payload){
+        QObject::connect(this->tcpConnectionManager.get(), &TCPProxyConnectionManager::bytesReceived, this, [this, connectionId, &proxyServerSocket](const size_t& _connectionId, const QByteArray& payload){
             if(_connectionId == connectionId)
             {
                 if(proxyServerSocket.state() == QAbstractSocket::ConnectedState)
@@ -70,33 +71,29 @@ void ProxyServer::incomingConnection(const qintptr socketDescriptor)
                 {
                     if(proxyServerSocket.state() == QAbstractSocket::ConnectedState)
                     {
-                        const auto payload = proxyServerSocket.readAll();
+                        const auto& payload = proxyServerSocket.readAll();
                         QTimer::singleShot(0, this, [this, connectionId, payload](){
                             this->tcpConnectionManager->write(connectionId, payload);
                         });
-                    }
-                    else
-                    {
-                        break;
                     }
                 }
             }
             else
             {
-                const auto proxyRequest = proxyServerSocket.readAll();
-                const auto proxyRequestIsValid = ProxyRequest::validate(proxyRequest);
+                const auto& proxyRequest = proxyServerSocket.readAll();
+                const auto& proxyRequestIsValid = ProxyRequest::validate(proxyRequest);
                 if(proxyRequestIsValid)
                 {
-                    const auto hostAndPort = ProxyRequest::extractHostAndPort(proxyRequest);
-                    const auto host = hostAndPort.first;
-                    const auto port = hostAndPort.second;
+                    const auto& hostAndPort = ProxyRequest::extractHostAndPort(proxyRequest);
+                    const auto& host = hostAndPort.first;
+                    const auto& port = hostAndPort.second;
                     QTimer::singleShot(0, this, [this, connectionId, host, port](){
                         this->tcpConnectionManager->connectToHost(connectionId, QByteArray(host.toStdString().c_str(), host.size()), port);
                     });
                 }
                 else
                 {
-                    const auto badGateway = QByteArray("HTTP/1.1 502 Bad Gateway\r\n"
+                    const auto& badGateway = QByteArray("HTTP/1.1 502 Bad Gateway\r\n"
                                                        "Content-Type: text/html\r\n"
                                                        "Content-Length: 0\r\n"
                                                        "Connection: close\r\n\r\n");

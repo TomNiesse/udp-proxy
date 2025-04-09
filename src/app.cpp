@@ -27,31 +27,33 @@ App::App(int& argc, char** argv) : QCoreApplication(argc, argv)
 
 void App::initialize()
 {
-    const auto operationMode = this->parser.value(OPTION_OPERATION_MODE);
-    const auto proxyListenAddress = this->parser.value(OPTION_PROXY_LISTEN_ADDRESS);
-    const auto proxyListenPort = this->parser.value(OPTION_PROXY_LISTEN_PORT);
-    const auto udpTunnelSenderListenAddress = this->parser.value(OPTION_UDP_TUNNEL_SENDER_LISTEN_ADDRESS);
-    const auto udpTunnelSenderListenPort = this->parser.value(OPTION_UDP_TUNNEL_SENDER_LISTEN_PORT);
-    const auto udpTunnelSenderEgressAddress = this->parser.value(OPTION_UDP_TUNNEL_SENDER_EGRESS_ADDRESS);
-    const auto udpTunnelSenderEgressPort = this->parser.value(OPTION_UDP_TUNNEL_SENDER_EGRESS_PORT);
-    const auto udpTunnelReceiverListenAddress = this->parser.value(OPTION_UDP_TUNNEL_RECEIVER_LISTEN_ADDRESS);
-    const auto udpTunnelReceiverListenPort = this->parser.value(OPTION_UDP_TUNNEL_RECEIVER_LISTEN_PORT);
-    const auto udpTunnelReceiverEgressAddress = this->parser.value(OPTION_UDP_TUNNEL_RECEIVER_EGRESS_ADDRESS);
-    const auto udpTunnelReceiverEgressPort = this->parser.value(OPTION_UDP_TUNNEL_RECEIVER_EGRESS_PORT);
+    const auto& operationMode = this->parser.value(OPTION_OPERATION_MODE);
+    const auto& proxyListenAddress = this->parser.value(OPTION_PROXY_LISTEN_ADDRESS);
+    const auto& proxyListenPort = this->parser.value(OPTION_PROXY_LISTEN_PORT);
+    const auto& udpTunnelSenderListenAddress = this->parser.value(OPTION_UDP_TUNNEL_SENDER_LISTEN_ADDRESS);
+    const auto& udpTunnelSenderListenPort = this->parser.value(OPTION_UDP_TUNNEL_SENDER_LISTEN_PORT);
+    const auto& udpTunnelSenderEgressAddress = this->parser.value(OPTION_UDP_TUNNEL_SENDER_EGRESS_ADDRESS);
+    const auto& udpTunnelSenderEgressPort = this->parser.value(OPTION_UDP_TUNNEL_SENDER_EGRESS_PORT);
+    const auto& udpTunnelReceiverListenAddress = this->parser.value(OPTION_UDP_TUNNEL_RECEIVER_LISTEN_ADDRESS);
+    const auto& udpTunnelReceiverListenPort = this->parser.value(OPTION_UDP_TUNNEL_RECEIVER_LISTEN_PORT);
+    const auto& udpTunnelReceiverEgressAddress = this->parser.value(OPTION_UDP_TUNNEL_RECEIVER_EGRESS_ADDRESS);
+    const auto& udpTunnelReceiverEgressPort = this->parser.value(OPTION_UDP_TUNNEL_RECEIVER_EGRESS_PORT);
+
     qDebug().noquote() << "Application settings:";
+    qDebug().noquote() << "Operation mode =" << operationMode;
     if(operationMode == "proxy")
     {
-        qDebug().noquote() << "Proxy listen address =" << this->parser.value(OPTION_PROXY_LISTEN_ADDRESS);
-        qDebug().noquote() << "Proxy listen port =" << this->parser.value(OPTION_PROXY_LISTEN_PORT);
+        qDebug().noquote() << "Proxy listen address =" << proxyListenAddress;
+        qDebug().noquote() << "Proxy listen port =" << proxyListenPort;
     }
-    qDebug().noquote() << "UDP tunnel sender listen address =" << this->parser.value(OPTION_UDP_TUNNEL_SENDER_LISTEN_ADDRESS);
-    qDebug().noquote() << "UDP tunnel sender listen port =" << this->parser.value(OPTION_UDP_TUNNEL_SENDER_LISTEN_PORT);
-    qDebug().noquote() << "UDP tunnel sender egress address =" << this->parser.value(OPTION_UDP_TUNNEL_SENDER_EGRESS_ADDRESS);
-    qDebug().noquote() << "UDP tunnel sender egress port =" << this->parser.value(OPTION_UDP_TUNNEL_SENDER_EGRESS_PORT);
-    qDebug().noquote() << "UDP tunnel receiver listen address =" << this->parser.value(OPTION_UDP_TUNNEL_RECEIVER_LISTEN_ADDRESS);
-    qDebug().noquote() << "UDP tunnel receiver listen port =" << this->parser.value(OPTION_UDP_TUNNEL_RECEIVER_LISTEN_PORT);
-    qDebug().noquote() << "UDP tunnel receiver egress address =" << this->parser.value(OPTION_UDP_TUNNEL_RECEIVER_EGRESS_ADDRESS);
-    qDebug().noquote() << "UDP tunnel receiver egress port =" << this->parser.value(OPTION_UDP_TUNNEL_RECEIVER_EGRESS_PORT);
+    qDebug().noquote() << "UDP tunnel sender listen address =" << udpTunnelSenderListenAddress;
+    qDebug().noquote() << "UDP tunnel sender listen port =" << udpTunnelSenderListenPort;
+    qDebug().noquote() << "UDP tunnel sender egress address =" << udpTunnelSenderEgressAddress;
+    qDebug().noquote() << "UDP tunnel sender egress port =" << udpTunnelSenderEgressPort;
+    qDebug().noquote() << "UDP tunnel receiver listen address =" << udpTunnelReceiverListenAddress;
+    qDebug().noquote() << "UDP tunnel receiver listen port =" << udpTunnelReceiverListenPort;
+    qDebug().noquote() << "UDP tunnel receiver egress address =" << udpTunnelReceiverEgressAddress;
+    qDebug().noquote() << "UDP tunnel receiver egress port =" << udpTunnelReceiverEgressPort;
 
     UDPTunnelConnectionSettings udpTunnelConnectionSettings;
     udpTunnelConnectionSettings.senderIngressAddress = QHostAddress(udpTunnelSenderListenAddress);
@@ -74,7 +76,7 @@ void App::initialize()
         });
 
         // Start listening for proxy client connections
-        const bool result = proxyServer->listen(QHostAddress(proxyListenAddress), static_cast<quint16>(proxyListenPort.toInt()));
+        const bool& result = proxyServer->listen(QHostAddress(proxyListenAddress), static_cast<quint16>(proxyListenPort.toInt()));
         if(result)
         {
             qDebug().noquote() << "Proxy server is listening on port" << proxyListenPort;
@@ -113,8 +115,8 @@ void App::parseCommandLineOptions()
     {
         this->parser.addOption(commandLineOption);
     }
-    const QCommandLineOption helpOption = this->parser.addHelpOption();
-    const QCommandLineOption versionOption = this->parser.addVersionOption();
+    const QCommandLineOption& helpOption = this->parser.addHelpOption();
+    const QCommandLineOption& versionOption = this->parser.addVersionOption();
     this->parser.parse(this->arguments());
     if (this->parser.isSet(versionOption))
     {

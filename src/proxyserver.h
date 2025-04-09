@@ -10,7 +10,7 @@ class ProxyServer : public QTcpServer
     Q_OBJECT
     Q_DISABLE_COPY_MOVE(ProxyServer)
 public:
-    ProxyServer(const UDPTunnelConnectionSettings udpTunnelConnectionSettings);
+    explicit ProxyServer(const UDPTunnelConnectionSettings& udpTunnelConnectionSettings);
 public slots:
     void incomingConnection(const qintptr socketDescriptor) override;
 private:

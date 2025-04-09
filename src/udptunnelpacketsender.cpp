@@ -8,7 +8,7 @@
 #include <QCoreApplication>
 #include <QDateTime>
 
-UDPTunnelPacketSender::UDPTunnelPacketSender(const QHostAddress listenAddress, const quint16 listenPort, const QHostAddress egressAddress, const quint16 egressPort)
+UDPTunnelPacketSender::UDPTunnelPacketSender(const QHostAddress& listenAddress, const quint16& listenPort, const QHostAddress& egressAddress, const quint16& egressPort)
 {
     const QMutexLocker lock(&this->lock);
 
@@ -26,13 +26,13 @@ UDPTunnelPacketSender::UDPTunnelPacketSender(const QHostAddress listenAddress, c
     }
 }
 
-void UDPTunnelPacketSender::write(const QByteArray packet)
+void UDPTunnelPacketSender::write(const QByteArray& packet)
 {
     const QMutexLocker lock(&this->lock);
 
+    QUdpSocket egressSocket;
     do
     {
-        QUdpSocket egressSocket;
         egressSocket.writeDatagram(packet, packet.size(), this->egressAddress, this->egressPort);
         egressSocket.flush();
     } while (!this->ingressSocket->waitForReadyRead(MAX_ROUNDTRIP_TIMEOUT));
@@ -44,11 +44,10 @@ void UDPTunnelPacketSender::handleResponse()
 {
     while (this->ingressSocket->hasPendingDatagrams())
     {
-        const auto datagram = this->ingressSocket->receiveDatagram();
-        const auto packet = UDPTunnelPacket(datagram.data());
+        const auto& datagram = this->ingressSocket->receiveDatagram();
+        const auto& packet = UDPTunnelPacket(datagram.data());
         switch(packet.getHeader().getPacketType())
         {
-        case UDP_DATA_RECEIVED_ACKNOWLEDGE:
         case UDP_DATA_FLUSH_RECEIVED_ACKNOWLEDGE:
             QTimer::singleShot(0, this, [this](){
                 emit receivedResponse();

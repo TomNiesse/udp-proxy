@@ -7,8 +7,8 @@
 class TCPTunnelPacket
 {
 public:
-    static const QByteArray encode(TCPTunnelPacketHeader header, QByteArray payload);
-    static const std::pair<TCPTunnelPacketHeader, QByteArray> decode(const QByteArray encodedData);
+    static const QByteArray encode(TCPTunnelPacketHeader& header, const QByteArray& payload);
+    static const std::pair<TCPTunnelPacketHeader, QByteArray> decode(const QByteArray& encodedData);
 };
 
 #endif // TCPTUNNELPACKET_H
