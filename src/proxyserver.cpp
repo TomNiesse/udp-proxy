@@ -25,7 +25,6 @@ void ProxyServer::incomingConnection(const qintptr socketDescriptor)
         QTcpSocket proxyServerSocket;
         proxyServerSocket.setSocketOption(QAbstractSocket::LowDelayOption, 1);
         proxyServerSocket.setSocketOption(QAbstractSocket::KeepAliveOption, 1);
-        proxyServerSocket.setReadBufferSize(2048); // 2KiB
         proxyServerSocket.setSocketDescriptor(socketDescriptor);
 
         // Connect to the signals that TCPProxyConnectionManager provides

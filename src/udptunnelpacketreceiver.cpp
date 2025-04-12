@@ -22,7 +22,6 @@ void UDPTunnelPacketReceiver::handleReceivedBytes(const QByteArray& message)
 {
     auto packet = UDPTunnelPacket(message);
     auto header = packet.getHeader();
-    QUdpSocket egressSocket;
 
     QByteArray restoredPacket;
 
@@ -57,12 +56,15 @@ void UDPTunnelPacketReceiver::handleReceivedBytes(const QByteArray& message)
     // Send a response
     packet.setHeader(header);
     const auto& encodedPacket = packet.encode();
-    egressSocket.writeDatagram(encodedPacket, encodedPacket.size(), this->egressAddress, this->egressPort);
-    egressSocket.flush();
+    this->egressSocket->writeDatagram(encodedPacket, this->egressAddress, this->egressPort);
+    std::this_thread::yield();
 }
 
 void UDPTunnelPacketReceiver::receiveThread()
 {
+    this->egressSocket = std::make_unique<QUdpSocket>();
+    this->egressSocket->setSocketOption(QAbstractSocket::LowDelayOption, true);
+
     QUdpSocket ingressSocket;
     const bool& listeningForTraffic = ingressSocket.bind(this->listenAddress, this->listenPort);
     if(!listeningForTraffic)
@@ -73,9 +75,9 @@ void UDPTunnelPacketReceiver::receiveThread()
 
     while(true)
     {
-        if(ingressSocket.waitForReadyRead())
+        if(ingressSocket.waitForReadyRead(-1))
         {
-            if(ingressSocket.hasPendingDatagrams())
+            while(ingressSocket.hasPendingDatagrams())
             {
                 const auto& datagram = ingressSocket.receiveDatagram();
                 const auto& message = datagram.data();

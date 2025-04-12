@@ -24,6 +24,7 @@ private:
     quint16 listenPort;
     QHostAddress egressAddress;
     quint16 egressPort;
+    std::unique_ptr<QUdpSocket> egressSocket;
     UDPTunnelPacketChunkMananger chunkManager;
     QMutex lock;
 };

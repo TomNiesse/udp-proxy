@@ -4,9 +4,9 @@
 #include <QEventLoop>
 #include <QTimer>
 #include <QNetworkDatagram>
-
 #include <QCoreApplication>
 #include <QDateTime>
+#include <thread>
 
 UDPTunnelPacketSender::UDPTunnelPacketSender(const QHostAddress& listenAddress, const quint16& listenPort, const QHostAddress& egressAddress, const quint16& egressPort)
 {
@@ -24,17 +24,19 @@ UDPTunnelPacketSender::UDPTunnelPacketSender(const QHostAddress& listenAddress, 
         qDebug() << QString("Could not open %1:%2. Exiting").arg(this->listenAddress.toString()).arg(this->listenPort);
         exit(EXIT_FAILURE);
     }
+
+    this->egressSocket = std::make_unique<QUdpSocket>();
+    this->egressSocket->setSocketOption(QAbstractSocket::LowDelayOption, true);
 }
 
 void UDPTunnelPacketSender::write(const QByteArray& packet)
 {
     const QMutexLocker lock(&this->lock);
 
-    QUdpSocket egressSocket;
     do
     {
-        egressSocket.writeDatagram(packet, packet.size(), this->egressAddress, this->egressPort);
-        egressSocket.flush();
+        this->egressSocket->writeDatagram(packet, this->egressAddress, this->egressPort);
+        std::this_thread::yield();
     } while (!this->ingressSocket->waitForReadyRead(MAX_ROUNDTRIP_TIMEOUT));
 
     this->handleResponse();
