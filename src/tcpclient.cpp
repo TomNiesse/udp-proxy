@@ -77,8 +77,6 @@ void TCPClient::connectToHost(const size_t& connectionId, const QString& address
             }
         });
 
-        this->tcpConnections.at(connectionId)->setSocketOption(QAbstractSocket::LowDelayOption, 1);
-        this->tcpConnections.at(connectionId)->setSocketOption(QAbstractSocket::KeepAliveOption, 1);
         this->tcpConnections.at(connectionId)->connectToHost(address, port);
     }
 }
