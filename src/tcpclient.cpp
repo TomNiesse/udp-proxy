@@ -1,9 +1,8 @@
 #include "tcpclient.h"
 #include "tcptunnelpacket.h"
+#include "limits.h"
 #include <QCoreApplication>
 #include <QTimer>
-
-#include <QDateTime>
 
 TCPClient::TCPClient()
 {
@@ -77,6 +76,8 @@ void TCPClient::connectToHost(const size_t& connectionId, const QString& address
             }
         });
 
+        this->tcpConnections.at(connectionId)->setSocketOption(QAbstractSocket::KeepAliveOption, true);
+        this->tcpConnections.at(connectionId)->setSocketOption(QAbstractSocket::LowDelayOption, true);
         this->tcpConnections.at(connectionId)->connectToHost(address, port);
     }
 }

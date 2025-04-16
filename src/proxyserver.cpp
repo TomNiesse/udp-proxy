@@ -23,6 +23,8 @@ void ProxyServer::incomingConnection(const qintptr socketDescriptor)
         bool connectionActive = false;
 
         QTcpSocket proxyServerSocket;
+        proxyServerSocket.setSocketOption(QAbstractSocket::KeepAliveOption, true);
+        proxyServerSocket.setSocketOption(QAbstractSocket::LowDelayOption, true);
         proxyServerSocket.setSocketDescriptor(socketDescriptor);
 
         // Connect to the signals that TCPProxyConnectionManager provides
