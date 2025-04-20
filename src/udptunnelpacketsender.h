@@ -17,7 +17,7 @@ public:
 signals:
     void receivedResponse();
 
-private slots:
+private:
     void handleResponse();
 
 private:

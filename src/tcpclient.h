@@ -20,6 +20,8 @@ signals:
 
 public slots:
     void handleUdpTunnelPacket(const QByteArray& packet);
+
+private:
     void connectToHost(const size_t& connectionId, const QString& address, const quint16& port);
     void disconnect(const size_t& connectionId);
     void write(const size_t& connectionId, const QByteArray& packet);

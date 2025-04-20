@@ -42,6 +42,8 @@ void UDPTunnelPacketSender::write(const QByteArray& packet)
     this->handleResponse();
 }
 
+// Private
+
 void UDPTunnelPacketSender::handleResponse()
 {
     while (this->ingressSocket->hasPendingDatagrams())

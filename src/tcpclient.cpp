@@ -24,29 +24,23 @@ void TCPClient::handleUdpTunnelPacket(const QByteArray& packet)
     switch(packetType)
     {
     case TCPTunnelPacketHeaderType::TCP_COMMAND_OPEN_CONNECTION:
-        QTimer::singleShot(0, this, [this, connectionId, host, port](){
-            this->connectToHost(connectionId, host, port);
-        });
+        this->connectToHost(connectionId, host, port);
         break;
     case TCPTunnelPacketHeaderType::TCP_COMMAND_CLOSE_CONNECTION:
-        QTimer::singleShot(0, this, [this, connectionId](){
-            this->disconnect(connectionId);
-        });
+        this->disconnect(connectionId);
         break;
     case TCPTunnelPacketHeaderType::TCP_COMMAND_SEND_DATA:
-        QTimer::singleShot(0, this, [this, connectionId, payload](){
-            this->write(connectionId, payload);
-        });
+        this->write(connectionId, payload);
         break;
     default:
         break;
     }
 }
 
+// Private
+
 void TCPClient::connectToHost(const size_t& connectionId, const QString& address, const quint16& port)
 {
-    const QMutexLocker lock(&this->lock);
-
     if(this->tcpConnections.find(connectionId) == this->tcpConnections.end())
     {
         this->tcpConnections.emplace(connectionId, std::make_unique<QTcpSocket>());
@@ -76,16 +70,12 @@ void TCPClient::connectToHost(const size_t& connectionId, const QString& address
             }
         });
 
-        this->tcpConnections.at(connectionId)->setSocketOption(QAbstractSocket::KeepAliveOption, true);
-        this->tcpConnections.at(connectionId)->setSocketOption(QAbstractSocket::LowDelayOption, true);
         this->tcpConnections.at(connectionId)->connectToHost(address, port);
     }
 }
 
 void TCPClient::disconnect(const size_t& connectionId)
 {
-    const QMutexLocker lock(&this->lock);
-
     // Make sure the connection exists
     if(this->tcpConnections.find(connectionId) != this->tcpConnections.end())
     {
@@ -101,8 +91,6 @@ void TCPClient::disconnect(const size_t& connectionId)
 
 void TCPClient::write(const size_t& connectionId, const QByteArray& packet)
 {
-    const QMutexLocker lock(&this->lock);
-
     if(this->tcpConnections.find(connectionId) != this->tcpConnections.end())
     {
         this->tcpConnections.at(connectionId)->write(packet, packet.size());

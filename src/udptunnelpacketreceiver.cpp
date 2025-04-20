@@ -57,7 +57,6 @@ void UDPTunnelPacketReceiver::handleReceivedBytes(const QByteArray& message)
     packet.setHeader(header);
     const auto& encodedPacket = packet.encode();
     this->egressSocket->writeDatagram(encodedPacket, this->egressAddress, this->egressPort);
-    std::this_thread::yield();
 }
 
 void UDPTunnelPacketReceiver::receiveThread()

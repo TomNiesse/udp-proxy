@@ -14,6 +14,7 @@ public:
 public slots:
     void incomingConnection(const qintptr socketDescriptor) override;
 private:
+    void handleIncomingConnection(const qintptr socketDescriptor);
     size_t connectionId = 0;
     QMutex lock;
     std::unique_ptr<TCPProxyConnectionManager> tcpConnectionManager;

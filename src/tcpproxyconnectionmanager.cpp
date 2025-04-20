@@ -34,9 +34,7 @@ void TCPProxyConnectionManager::connectToHost(const size_t& connectionId, const 
     header.setPort(port);
 
     const auto encodedData = TCPTunnelPacket::encode(header, {});
-    QTimer::singleShot(0, this, [this, encodedData](){
-        this->udpTunnelConnection->send(encodedData);
-    });
+    this->udpTunnelConnection->send(encodedData);
 }
 
 void TCPProxyConnectionManager::write(const size_t& connectionId, const QByteArray& payload)
@@ -48,9 +46,7 @@ void TCPProxyConnectionManager::write(const size_t& connectionId, const QByteArr
     header.setConnectionId(connectionId);
 
     const auto& encodedData = TCPTunnelPacket::encode(header, payload);
-    QTimer::singleShot(0, this, [this, encodedData](){
-        this->udpTunnelConnection->send(encodedData);
-    });
+    this->udpTunnelConnection->send(encodedData);
 }
 
 void TCPProxyConnectionManager::disconnect(const size_t& connectionId)
@@ -62,9 +58,7 @@ void TCPProxyConnectionManager::disconnect(const size_t& connectionId)
     header.setConnectionId(connectionId);
 
     const auto& encodedData = TCPTunnelPacket::encode(header, {});
-    QTimer::singleShot(0, this, [this, encodedData](){
-        this->udpTunnelConnection->send(encodedData);
-    });
+    this->udpTunnelConnection->send(encodedData);
 }
 
 // Private
