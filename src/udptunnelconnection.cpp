@@ -28,7 +28,7 @@ UDPTunnelConnection::UDPTunnelConnection(const UDPTunnelConnectionSettings& conn
     this->sender = std::make_unique<UDPTunnelPacketSender>(senderIngressAddress, senderIngressPort, senderEgressAddress, senderEgressPort);
     this->receiver = std::make_unique<UDPTunnelPacketReceiver>(receiverIngressAddress, receiverIngressPort, receiverEgressAddress, receiverEgressPort);
 
-    connect(this->receiver.get(), &UDPTunnelPacketReceiver::bytesReceived, this, [this](const QByteArray& bytes){
+    QObject::connect(this->receiver.get(), &UDPTunnelPacketReceiver::bytesReceived, this, [this](const QByteArray& bytes){
         emit this->bytesReceived(bytes);
     });
 }
