@@ -24,18 +24,18 @@ UDPTunnelPacketSender::UDPTunnelPacketSender(const QHostAddress& listenAddress, 
         qDebug() << QString("Could not open %1:%2. Exiting").arg(this->listenAddress.toString()).arg(this->listenPort);
         exit(EXIT_FAILURE);
     }
-
-    this->egressSocket = std::make_unique<QUdpSocket>();
-    this->egressSocket->setSocketOption(QAbstractSocket::LowDelayOption, true);
 }
 
 void UDPTunnelPacketSender::write(const QByteArray& packet)
 {
     const QMutexLocker lock(&this->lock);
 
+    QUdpSocket egressSocket;
+    egressSocket.setSocketOption(QAbstractSocket::LowDelayOption, true);
+
     do
     {
-        this->egressSocket->writeDatagram(packet, this->egressAddress, this->egressPort);
+        egressSocket.writeDatagram(packet, this->egressAddress, this->egressPort);
         std::this_thread::yield();
     } while (!this->ingressSocket->waitForReadyRead(MAX_ROUNDTRIP_TIMEOUT));
 
@@ -53,9 +53,7 @@ void UDPTunnelPacketSender::handleResponse()
         switch(packet.getHeader().getPacketType())
         {
         case UDP_DATA_FLUSH_RECEIVED_ACKNOWLEDGE:
-            QTimer::singleShot(0, this, [this](){
-                emit receivedResponse();
-            });
+            emit receivedResponse();
             break;
         default:
             break;

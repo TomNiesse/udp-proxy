@@ -26,7 +26,6 @@ private:
     QHostAddress egressAddress;
     quint16 egressPort = 0;
     std::unique_ptr<QUdpSocket> ingressSocket;
-    std::unique_ptr<QUdpSocket> egressSocket;
     QMutex lock;
 };
 
