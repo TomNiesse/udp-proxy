@@ -36,10 +36,10 @@ void App::initialize()
         qDebug().noquote() << "Proxy listen address =" << proxyListenAddress;
         qDebug().noquote() << "Proxy listen port =" << proxyListenPort;
     }
-    qDebug().noquote() << "UDP tunnel listen address =" << udpTunnelListenAddress;
-    qDebug().noquote() << "UDP tunnel listen port =" << udpTunnelListenPort;
-    qDebug().noquote() << "UDP tunnel egress address =" << udpTunnelEgressAddress;
-    qDebug().noquote() << "UDP tunnel egress port =" << udpTunnelEgressPort;
+    qDebug().noquote() << "UDP tunnel connection listen address =" << udpTunnelListenAddress;
+    qDebug().noquote() << "UDP tunnel connection listen port =" << udpTunnelListenPort;
+    qDebug().noquote() << "UDP tunnel connection egress address =" << udpTunnelEgressAddress;
+    qDebug().noquote() << "UDP tunnel connection egress port =" << udpTunnelEgressPort;
 
     UDPTunnelConnectionSettings udpTunnelConnectionSettings;
     udpTunnelConnectionSettings.setIngressAddress(QByteArray::fromStdString(udpTunnelListenAddress.toStdString()));
