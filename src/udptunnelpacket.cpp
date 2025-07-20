@@ -1,5 +1,4 @@
 #include "udptunnelpacket.h"
-#include <QDebug>
 
 UDPTunnelPacket::UDPTunnelPacket()
 {
@@ -20,12 +19,12 @@ UDPTunnelPacket::UDPTunnelPacket(const UDPTunnelPacketHeader& header, const QByt
 
 UDPTunnelPacket::UDPTunnelPacket(const QByteArray& encoded)
 {
-    const auto decoded = UDPTunnelPacket::decode(encoded);
+    const auto& decoded = UDPTunnelPacket::decode(encoded);
     this->header = decoded.first;
     this->payload = decoded.second;
 }
 
-const UDPTunnelPacketHeader UDPTunnelPacket::getHeader() const
+const UDPTunnelPacketHeader& UDPTunnelPacket::getHeader() const
 {
     return this->header;
 }
@@ -35,7 +34,7 @@ void UDPTunnelPacket::setHeader(const UDPTunnelPacketHeader& header)
     this->header = header;
 }
 
-const QByteArray UDPTunnelPacket::getPayload() const
+const QByteArray& UDPTunnelPacket::getPayload() const
 {
     return this->payload;
 }
@@ -50,20 +49,17 @@ const QByteArray UDPTunnelPacket::encode() const
     return UDPTunnelPacket::encode(this->header, this->payload);
 }
 
-// Static
-
 const QByteArray UDPTunnelPacket::encode(const UDPTunnelPacketHeader& header, const QByteArray& payload)
 {
     QByteArray out;
-    auto headerCopy = header;
-    out.append(headerCopy.encode());
+    out.append(header.encode());
     out.append(payload);
     return out;
 }
 
 const std::pair<UDPTunnelPacketHeader, QByteArray> UDPTunnelPacket::decode(const QByteArray& data)
 {
-    UDPTunnelPacketHeader packetHeader(data.mid(0, UDPTunnelPacketHeader::getHeaderSize()));
+    const UDPTunnelPacketHeader packetHeader(data.mid(0, UDPTunnelPacketHeader::getHeaderSize()));
     const QByteArray& payload = data.mid(UDPTunnelPacketHeader::getHeaderSize(), data.length());
     return std::make_pair(packetHeader, payload);
 }
@@ -79,20 +75,21 @@ const std::vector<QByteArray> UDPTunnelPacket::split(const QByteArray& payload, 
     return out;
 }
 
-const std::vector<QByteArray> UDPTunnelPacket::addHeaders(UDPTunnelPacketHeader& header, const std::vector<QByteArray>& payloads)
+const std::vector<QByteArray> UDPTunnelPacket::addHeaders(const UDPTunnelPacketHeader& header, const std::vector<QByteArray>& payloads)
 {
     std::vector<QByteArray> out;
+    auto headerCopy = header;
     for(size_t payloadId = 0; payloadId < payloads.size(); payloadId++)
     {
         const auto& payload = payloads[payloadId];
         const auto& lastPayload = (payloadId == (payloads.size()-1));
-        header.setLastSegment(lastPayload);
-        header.setPacketType(UDPTunnelPacketType::UDP_DATA);
-        out.push_back(UDPTunnelPacket::encode(header, payload));
-        header.setChunkId(header.getChunkId()+1);
+        headerCopy.setLastSegment(lastPayload);
+        headerCopy.setPacketType(UDPTunnelPacketType::UDP_DATA);
+        out.push_back(UDPTunnelPacket::encode(headerCopy, payload));
+        headerCopy.setChunkId(headerCopy.getChunkId()+1);
     }
-    header.setPacketType(UDPTunnelPacketType::UDP_DATA_FLUSH);
-    out.push_back(UDPTunnelPacket::encode(header, {}));
+    headerCopy.setPacketType(UDPTunnelPacketType::UDP_DATA_FLUSH);
+    out.push_back(UDPTunnelPacket::encode(headerCopy, {}));
     return out;
 }
 

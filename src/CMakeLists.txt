@@ -9,31 +9,31 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-set(CMAKE_CXX_FLAGS "-Ofast -pipe -Wall -Wextra -Wconversion -Werror -Wpedantic")
-set(CMAKE_CXX_FLAGS_DEBUG "-Ofast -pipe -Wall -Wextra -Wconversion -Werror -Wpedantic")
+# set(CMAKE_CXX_FLAGS "-Ofast -pipe -Wall -Wextra -Wconversion -Werror -Wpedantic")
+# set(CMAKE_CXX_FLAGS_DEBUG "-Ofast -pipe -Wall -Wextra -Wconversion -Werror -Wpedantic")
 
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Core Network)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Network)
 
 add_executable(udpproxy
   main.cpp
+  app.h app.cpp
+  clientconnectionmanager.h clientconnectionmanager.cpp
+  hostconnectionmanager.h hostconnectionmanager.cpp
+  clientconnection.h clientconnection.cpp
+  udptunnelpackettransceiver.h udptunnelpackettransceiver.cpp
   udptunnelconnection.h udptunnelconnection.cpp
   udptunnelpacket.h udptunnelpacket.cpp
+  udptunnelpacketchunkmananger.h udptunnelpacketchunkmananger.cpp
   udptunnelpacketheader.h udptunnelpacketheader.cpp
-  tcptunnelpacketheader.h tcptunnelpacketheader.cpp
   tcptunnelpacket.h tcptunnelpacket.cpp
-  proxyclient.h proxyclient.cpp
+  tcptunnelpacketheader.h tcptunnelpacketheader.cpp
+  udptunnelconnectionsettings.h udptunnelconnectionsettings.cpp
+  hostconnection.h hostconnection.cpp
+  udptunnelconnectionportmanager.h udptunnelconnectionportmanager.cpp
   proxyserver.h proxyserver.cpp
   proxyrequest.h proxyrequest.cpp
-  tcpproxyconnectionmanager.h tcpproxyconnectionmanager.cpp
-  udptunnelpacketchunkmananger.h udptunnelpacketchunkmananger.cpp
-  limits.h
-  app.h app.cpp
-  tcpclient.h tcpclient.cpp
-  udptunnelpacketsender.h udptunnelpacketsender.cpp
-  udptunnelpacketreceiver.h udptunnelpacketreceiver.cpp
   version.h
-
 )
 target_link_libraries(udpproxy Qt${QT_VERSION_MAJOR}::Core Qt${QT_VERSION_MAJOR}::Network)
 

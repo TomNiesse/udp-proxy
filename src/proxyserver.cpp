@@ -1,126 +1,101 @@
 #include "proxyserver.h"
 #include "proxyrequest.h"
-#include "limits.h"
+#include "hostconnection.h"
 #include <thread>
 #include <QTcpSocket>
-#include <QDateTime>
-#include <QCoreApplication>
-#include <QElapsedTimer>
-#include <QThread>
 #include <QTimer>
-#include <QEventLoop>
 
 ProxyServer::ProxyServer(const UDPTunnelConnectionSettings& udpTunnelConnectionSettings)
 {
-    this->tcpConnectionManager = std::make_unique<TCPProxyConnectionManager>(udpTunnelConnectionSettings);
+    this->hostConnectionManager = std::make_unique<HostConnectionManager>(udpTunnelConnectionSettings);
+    this->portManager = std::make_unique<UDPTunnelConnectionPortManager>(UDPTunnelConnectionPortManager::generatePortList(50000, 60000));
 }
 
 void ProxyServer::incomingConnection(const qintptr socketDescriptor)
 {
     QTimer::singleShot(0, this, [this, socketDescriptor](){
-        this->handleIncomingConnection(socketDescriptor);
+        const auto& hostManagerUdpTunnelConnectionSettings = this->hostConnectionManager->getUdpTunnelConnectionSettings();
+        const auto& udpTunnelConnectionSettingsTemplate = UDPTunnelConnectionSettings(hostManagerUdpTunnelConnectionSettings.getIngressAddress(), 0, hostManagerUdpTunnelConnectionSettings.getEgressAddress(), 0);
+        const auto& udpTunnelConnectionSettings = this->portManager->generateUDPTunnelConnectionSettings(udpTunnelConnectionSettingsTemplate);
+        const auto& hostUdpTunnelConnectionSettings = udpTunnelConnectionSettings.first;
+        const auto& clientUdpTunnelConnectionSettings = udpTunnelConnectionSettings.second;
+
+        this->hostConnectionManager->openConnection(hostUdpTunnelConnectionSettings);
+        std::thread(&ProxyServer::communicationThread, this, socketDescriptor, clientUdpTunnelConnectionSettings).detach();
     });
 }
 
 // Private
 
-void ProxyServer::handleIncomingConnection(const qintptr socketDescriptor)
+void ProxyServer::communicationThread(const qintptr socketDescriptor, const UDPTunnelConnectionSettings udpTunnelConnectionSettings)
 {
-    this->lock.lock();
-    const auto connectionId = this->connectionId++;
-    bool connectionActive = false;
+    auto proxyConnectionState = ProxyConnectionState::WAITING;
+    QEventLoop eventLoop;
+    HostConnection hostConnection(udpTunnelConnectionSettings);
 
     QTcpSocket proxyServerSocket;
+    proxyServerSocket.setSocketOption(QAbstractSocket::LowDelayOption, 1);
+    proxyServerSocket.setSocketOption(QAbstractSocket::KeepAliveOption, 1);
     proxyServerSocket.setSocketDescriptor(socketDescriptor);
 
-    // Connect to the signals that TCPProxyConnectionManager provides
-    QObject::connect(this->tcpConnectionManager.get(), &TCPProxyConnectionManager::connected, this, [this, connectionId, &connectionActive, &proxyServerSocket](const size_t& _connectionId){
-        if(_connectionId == connectionId)
+    // Handle proxy client command or forward proxy client data
+    QObject::connect(&proxyServerSocket, &QTcpSocket::readyRead, this, [this, &proxyServerSocket, &hostConnection, &proxyConnectionState, &eventLoop](){
+        while(proxyServerSocket.bytesAvailable())
         {
-            connectionActive = true;
-
-            if(proxyServerSocket.state() == QAbstractSocket::ConnectedState)
+            const auto& data = proxyServerSocket.readAll();
+            if(proxyConnectionState == ProxyConnectionState::WAITING)
             {
-                proxyServerSocket.write(QByteArray("HTTP/1.1 200 Connection Established\r\n\r\n"));
-            }
-        }
-    });
-    QObject::connect(this->tcpConnectionManager.get(), &TCPProxyConnectionManager::disconnected, this, [this, connectionId, &connectionActive](const size_t& _connectionId){
-        if(_connectionId == connectionId)
-        {
-            connectionActive = false;
-        }
-    });
-    QObject::connect(this->tcpConnectionManager.get(), &TCPProxyConnectionManager::bytesReceived, this, [this, connectionId, &proxyServerSocket](const size_t& _connectionId, const QByteArray& payload){
-        if(_connectionId == connectionId)
-        {
-            if(proxyServerSocket.state() == QAbstractSocket::ConnectedState)
-            {
-                proxyServerSocket.write(payload, payload.size());
-            }
-        }
-    });
-
-    // Connect to the signals that the QTcpSocket proxy client socket provides
-    QObject::connect(&proxyServerSocket, &QTcpSocket::disconnected, this, [this, connectionId, &connectionActive](){
-        connectionActive = false;
-    });
-    QObject::connect(&proxyServerSocket, &QTcpSocket::readyRead, this, [this, connectionId, &proxyServerSocket, &connectionActive](){
-        if(connectionActive)
-        {
-            while(proxyServerSocket.bytesAvailable())
-            {
-                if(proxyServerSocket.state() == QAbstractSocket::ConnectedState)
+                if(ProxyRequest::validate(data))
                 {
-                    const auto& payload = proxyServerSocket.readAll();
-                    this->tcpConnectionManager->write(connectionId, payload);
+                    const auto& hostAndPort = ProxyRequest::extractHostAndPort(data);
+                    const auto& host = hostAndPort.first;
+                    const auto& port = hostAndPort.second;
+                    hostConnection.connectToHost(host, port);
+                    proxyConnectionState = ProxyConnectionState::COMMUNICATION;
+                }
+                else
+                {
+                    eventLoop.quit();
                 }
             }
-        }
-        else
-        {
-            const auto& proxyRequest = proxyServerSocket.readAll();
-            const auto& proxyRequestIsValid = ProxyRequest::validate(proxyRequest);
-            if(proxyRequestIsValid)
+            else if(proxyConnectionState == ProxyConnectionState::COMMUNICATION)
             {
-                const auto& hostAndPort = ProxyRequest::extractHostAndPort(proxyRequest);
-                const auto& host = hostAndPort.first;
-                const auto& port = hostAndPort.second;
-                this->tcpConnectionManager->connectToHost(connectionId, QByteArray(host.toStdString().c_str(), host.size()), port);
-            }
-            else
-            {
-                const auto& badGateway = QByteArray("HTTP/1.1 502 Bad Gateway\r\n"
-                                                    "Content-Type: text/html\r\n"
-                                                    "Content-Length: 0\r\n"
-                                                    "Connection: close\r\n\r\n");
-                proxyServerSocket.write(badGateway);
-                proxyServerSocket.close();
+                hostConnection.send(data);
             }
         }
-    });
+    }, Qt::DirectConnection);
 
-    // Run in the background, until a connection is broken
-    QEventLoop eventLoop;
-    QObject::connect(this->tcpConnectionManager.get(), &TCPProxyConnectionManager::disconnected, &eventLoop, &QEventLoop::quit);
-    QObject::connect(&proxyServerSocket, &QTcpSocket::disconnected, &eventLoop, &QEventLoop::quit);
-    proxyServerSocket.waitForReadyRead(0);
-    this->lock.unlock();
+    // When the TCP connection to the requested host is established, let the proxy client know
+    QObject::connect(&hostConnection, &HostConnection::clientIsConnected, this, [this, &proxyServerSocket](){
+        const auto& connectionEstablished = QByteArray("HTTP/1.1 200 Connection Established\r\n\r\n");
+        proxyServerSocket.write(connectionEstablished);
+        proxyServerSocket.flush();
+    }, Qt::DirectConnection);
+
+    // Forward received TCP data to the proxy client
+    QObject::connect(&hostConnection, &HostConnection::receivedData, this, [this, &proxyServerSocket](const QByteArray& data){
+        proxyServerSocket.write(data);
+        proxyServerSocket.flush();
+    }, Qt::DirectConnection);
+
+    // When the proxy client disconnects, this thread needs to stop
+    QObject::connect(&hostConnection, &HostConnection::clientWasDisconnected, &eventLoop, QEventLoop::quit, Qt::DirectConnection);
+    QObject::connect(&proxyServerSocket, &QTcpSocket::disconnected, &eventLoop, QEventLoop::quit, Qt::DirectConnection);
+
+    // Run event loop
     eventLoop.exec();
-    this->lock.lock();
 
-    // Disconnect from the signals that TCPProxyConnectionManager provides
-    QObject::disconnect(this->tcpConnectionManager.get(), &TCPProxyConnectionManager::connected, this, nullptr);
-    QObject::disconnect(this->tcpConnectionManager.get(), &TCPProxyConnectionManager::disconnected, this, nullptr);
-    QObject::disconnect(this->tcpConnectionManager.get(), &TCPProxyConnectionManager::bytesReceived, this, nullptr);
-
-    // Disconnect from the signals that the QTcpSocket proxy client socket provides
-    QObject::disconnect(&proxyServerSocket, &QTcpSocket::disconnected, this, nullptr);
+    // Disconnect from the signals that are used during proxy communication
     QObject::disconnect(&proxyServerSocket, &QTcpSocket::readyRead, this, nullptr);
+    QObject::disconnect(&hostConnection, &HostConnection::clientIsConnected, this, nullptr);
+    QObject::disconnect(&hostConnection, &HostConnection::receivedData, this, nullptr);
+    QObject::disconnect(&hostConnection, &HostConnection::clientWasDisconnected, &eventLoop, QEventLoop::quit);
+    QObject::disconnect(&proxyServerSocket, &QTcpSocket::disconnected, &eventLoop, QEventLoop::quit);
 
-    QMetaObject::invokeMethod(&proxyServerSocket, [this, &proxyServerSocket, &connectionId](){
-        proxyServerSocket.disconnect();
-        this->tcpConnectionManager->disconnect(connectionId);
-    }, Qt::AutoConnection);
-    this->lock.unlock();
+    // Stop the thread that handles the TCP client traffic
+    proxyConnectionState = ProxyConnectionState::STOP_CLIENT;
+    hostConnection.quit();
+    QObject::connect(&hostConnection, &HostConnection::clientHasQuit, &eventLoop, &QEventLoop::quit, Qt::DirectConnection);
+    eventLoop.exec();
+    QObject::disconnect(&hostConnection, &HostConnection::clientHasQuit, &eventLoop, &QEventLoop::quit);
 }

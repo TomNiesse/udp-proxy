@@ -3,45 +3,43 @@
 
 #include <QByteArray>
 #include <QString>
-#include <cstdint>
 
 typedef enum TCPTunnelPacketHeaderType
 {
     TCP_INVALID,
-    TCP_COMMAND_OPEN_CONNECTION,
-    TCP_COMMAND_CLOSE_CONNECTION,
-    TCP_COMMAND_SEND_DATA,
-    TCP_RESPONSE_OPENED_CONNECTION,
-    TCP_RESPONSE_CLOSED_CONNECTION,
-    TCP_RESPONSE_SENT_DATA,
-    TCP_RESPONSE_RECEIVED_DATA
+    TCP_OPEN_CONNECTION,
+    TCP_CLOSE_CONNECTION,
+    TCP_SEND_DATA,
+    TCP_CONNECTION_OPENED,
+    TCP_RECEIVED_DATA,
+    TCP_CONNECTION_CLOSED,
+    CLIENT_CLOSE_CONNECTION,
+    CLIENT_CLOSED_CONNECTION
 } TCPTunnelPacketHeaderType;
 
 class TCPTunnelPacketHeader
 {
 public:
-    explicit TCPTunnelPacketHeader();
-    explicit TCPTunnelPacketHeader(const QByteArray& data);
-    const QByteArray encode();
+    TCPTunnelPacketHeader();
+    TCPTunnelPacketHeader(const QByteArray& data);
 
-    TCPTunnelPacketHeaderType getPacketType() const;
+    const TCPTunnelPacketHeaderType& getPacketType() const;
     void setPacketType(const TCPTunnelPacketHeaderType& packetType);
-    size_t getConnectionId() const;
-    void setConnectionId(const size_t& connectionId);
-    QByteArray getHost() const;
+    const QByteArray& getHost() const;
     void setHost(const QByteArray& host);
-    quint16 getPort() const;
-    void setPort(const quint16& port);
+    const uint16_t& getPort() const;
+    void setPort(const uint16_t& port);
+    const QByteArray encode() const;
 
-    static const QByteArray encode(const TCPTunnelPacketHeaderType& packetType, const size_t& connectionId, const QByteArray& host = "", const quint16& port = -1);
-    static const std::tuple<TCPTunnelPacketHeaderType, size_t, quint16, size_t, QByteArray> decode(const QByteArray& encodedData);
-    static qsizetype headerSize(const QByteArray& encodedData);
-    static qsizetype minimalHeaderSize();
+    static const QByteArray encode(const TCPTunnelPacketHeaderType& packetType, const QByteArray& host = "", const uint16_t& port = -1);
+    static const std::tuple<TCPTunnelPacketHeaderType, uint16_t, size_t, QByteArray> decode(const QByteArray& encodedData);
+    static size_t headerSize(const QByteArray& encodedData);
+    static size_t minimalHeaderSize();
+
 private:
-    TCPTunnelPacketHeaderType packetType = TCPTunnelPacketHeaderType::TCP_INVALID;
-    size_t connectionId = -1;
+    TCPTunnelPacketHeaderType packetType;
     QByteArray host = "";
-    quint16 port = -1;
+    uint16_t port = 0;
 };
 
 #endif // TCPTUNNELPACKETHEADER_H
