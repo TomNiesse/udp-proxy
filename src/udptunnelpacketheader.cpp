@@ -1,6 +1,4 @@
 #include "udptunnelpacketheader.h"
-#include <QDebug>
-#include <cstring>
 
 UDPTunnelPacketHeader::UDPTunnelPacketHeader()
 {
@@ -11,7 +9,7 @@ UDPTunnelPacketHeader::UDPTunnelPacketHeader()
 
 UDPTunnelPacketHeader::UDPTunnelPacketHeader(const QByteArray& data)
 {
-    const auto decodedData = UDPTunnelPacketHeader::decode(data);
+    const auto& decodedData = UDPTunnelPacketHeader::decode(data);
     this->packetType = std::get<0>(decodedData);
     this->lastSegment = std::get<1>(decodedData);
     this->packetId = std::get<2>(decodedData);
@@ -43,11 +41,6 @@ void UDPTunnelPacketHeader::setLastSegment(const bool& lastSegment)
     this->lastSegment = lastSegment;
 }
 
-qsizetype UDPTunnelPacketHeader::getHeaderSize()
-{
-    return UDPTunnelPacketHeader::encode(UDPTunnelPacketType::INVALID, false, 0, 0).size();
-}
-
 const size_t& UDPTunnelPacketHeader::getPacketId() const
 {
     return this->packetId;
@@ -66,6 +59,11 @@ const size_t& UDPTunnelPacketHeader::getChunkId() const
 void UDPTunnelPacketHeader::setChunkId(const size_t& chunkId)
 {
     this->chunkId = chunkId;
+}
+
+qsizetype UDPTunnelPacketHeader::getHeaderSize()
+{
+    return UDPTunnelPacketHeader::encode(UDPTunnelPacketType::INVALID, false, 0, 0).size();
 }
 
 // Protected

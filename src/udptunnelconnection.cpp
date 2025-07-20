@@ -1,71 +1,47 @@
 #include "udptunnelconnection.h"
 #include "udptunnelpacket.h"
-#include "limits.h"
 #include <QUdpSocket>
-#include <QCoreApplication>
 #include <QNetworkDatagram>
 #include <QElapsedTimer>
-#include <thread>
-#include <QDateTime>
-#include <QTimer>
 
-UDPTunnelConnection::UDPTunnelConnection(const UDPTunnelConnectionSettings& connectionSettings, const QString& name)
+UDPTunnelConnection::UDPTunnelConnection(const UDPTunnelConnectionSettings& udpTunnelConnectionSettings, const QString& name)
 {
-    const QMutexLocker lock(&this->lock);
-
-    this->connectionSettings = connectionSettings;
+    this->udpTunnelConnectionSettings = std::make_unique<UDPTunnelConnectionSettings>(udpTunnelConnectionSettings.getIngressAddress(), udpTunnelConnectionSettings.getIngressPort(), udpTunnelConnectionSettings.getEgressAddress(), udpTunnelConnectionSettings.getEgressPort());
     this->name = name;
 
-    const auto senderIngressAddress = this->connectionSettings.senderIngressAddress;
-    const auto senderIngressPort = this->connectionSettings.senderIngressPort;
-    const auto senderEgressAddress = this->connectionSettings.senderEgressAddress;
-    const auto senderEgressPort = this->connectionSettings.senderEgressPort;
-    const auto receiverIngressAddress = this->connectionSettings.receiverIngressAddress;
-    const auto receiverIngressPort = this->connectionSettings.receiverIngressPort;
-    const auto receiverEgressAddress = this->connectionSettings.receiverEgressAddress;
-    const auto receiverEgressPort = this->connectionSettings.receiverEgressPort;
+    const auto& ingressAddress = this->udpTunnelConnectionSettings->getIngressAddress();
+    const auto& ingressPort = this->udpTunnelConnectionSettings->getIngressPort();
+    const auto& egressAddress = this->udpTunnelConnectionSettings->getEgressAddress();
+    const auto& egressPort = this->udpTunnelConnectionSettings->getEgressPort();
 
-    this->sender = std::make_unique<UDPTunnelPacketSender>(senderIngressAddress, senderIngressPort, senderEgressAddress, senderEgressPort);
-    this->receiver = std::make_unique<UDPTunnelPacketReceiver>(receiverIngressAddress, receiverIngressPort, receiverEgressAddress, receiverEgressPort);
+    this->udpTunnelPacketTransceiver = std::make_unique<UDPTunnelPacketTransceiver>(ingressAddress, ingressPort, egressAddress, egressPort);
 
-    QObject::connect(this->receiver.get(), &UDPTunnelPacketReceiver::bytesReceived, this, [this](const QByteArray& bytes){
-        emit this->bytesReceived(bytes);
-    });
+    QObject::connect(this->udpTunnelPacketTransceiver.get(), &UDPTunnelPacketTransceiver::receivedData, this, &UDPTunnelConnection::receivedData);
 }
 
-void UDPTunnelConnection::send(const QByteArray& payload)
+UDPTunnelConnection::~UDPTunnelConnection()
 {
-    const QMutexLocker lock(&this->lock);
+    QObject::disconnect(this->udpTunnelPacketTransceiver.get(), &UDPTunnelPacketTransceiver::receivedData, this, &UDPTunnelConnection::receivedData);
+}
 
-    // Split the payload into chunks
+bool UDPTunnelConnection::send(const QByteArray& payload)
+{
     const auto& payloadChunks = UDPTunnelPacket::split(payload, UDPTUNNEL_PAYLOAD_SIZE);
     UDPTunnelPacketHeader header;
     header.setPacketType(UDPTunnelPacketType::UDP_DATA);
-    header.setPacketId(this->packetId++);
-    header.setChunkId(0);
-    header.setLastSegment(false);
+    header.setPacketId(this->packetId);
     const auto& encodedChunks = UDPTunnelPacket::addHeaders(header, payloadChunks);
     this->packetId += encodedChunks.size();
 
-    QTimer::singleShot(0, this, [this, encodedChunks](){
-        for (const auto& encodedChunk : encodedChunks)
-        {
-            this->sender->write(encodedChunk);
-        }
-    });
+    for(const auto& chunk : encodedChunks)
+    {
+        this->udpTunnelPacketTransceiver->send(chunk);
+    }
 
+    return true;
 }
 
-const std::unique_ptr<UDPTunnelPacketSender>& UDPTunnelConnection::getSender()
+const UDPTunnelConnectionSettings UDPTunnelConnection::getUdpTunnelConnectionSettings() const
 {
-    const QMutexLocker lock(&this->lock);
-
-    return this->sender;
-}
-
-const std::unique_ptr<UDPTunnelPacketReceiver>& UDPTunnelConnection::getReceiver()
-{
-    const QMutexLocker lock(&this->lock);
-
-    return this->receiver;
+    return *this->udpTunnelConnectionSettings;
 }

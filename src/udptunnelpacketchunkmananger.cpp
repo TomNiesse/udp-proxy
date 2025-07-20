@@ -1,26 +1,17 @@
 #include "udptunnelpacketchunkmananger.h"
 
-#include <QDateTime>
-#include <QDebug>
-
-UDPTunnelPacketChunkMananger::UDPTunnelPacketChunkMananger() {}
-
 void UDPTunnelPacketChunkMananger::addChunk(const UDPTunnelPacket& chunk)
 {
-    const QMutexLocker lock(&this->lock);
+    const QMutexLocker lock(&this->chunksMutex);
 
-    const auto packetId = chunk.getHeader().getPacketId();
-
-    // Make sure that some memory is allocated
+    const auto& packetId = chunk.getHeader().getPacketId();
     if(this->chunks.find(packetId) == this->chunks.end())
     {
         this->chunks.emplace(packetId, std::vector<UDPTunnelPacket>());
     }
 
-    // Check if the chunk doesn't already exist
     if(!this->chunkAlreadyExists(chunk))
     {
-        // Add the chunk to the buffer for the given packet ID
         this->chunks.at(packetId).push_back(chunk);
     }
 }
@@ -32,8 +23,7 @@ const std::vector<QByteArray> UDPTunnelPacketChunkMananger::split(const QByteArr
 
 const QByteArray UDPTunnelPacketChunkMananger::convertChunksToPayload(const size_t& packetId)
 {
-    const QMutexLocker lock(&this->lock);
-
+    const QMutexLocker lock(&this->chunksMutex);
     if(this->chunks.find(packetId) == this->chunks.end())
     {
         return {};
@@ -55,17 +45,15 @@ const QByteArray UDPTunnelPacketChunkMananger::convertChunksToPayload(const size
 
 bool UDPTunnelPacketChunkMananger::chunkAlreadyExists(const UDPTunnelPacket& chunk)
 {
-    const auto& chunkHeader = chunk.getHeader();
-    const auto packetId = chunkHeader.getPacketId();
-    const auto chunkId = chunkHeader.getChunkId();
+    const auto& packetId = chunk.getHeader().getPacketId();
+    const auto& chunkId = chunk.getHeader().getChunkId();
 
     if(this->chunks.find(packetId) != this->chunks.end())
     {
         const auto& bufferedChunks = this->chunks.at(packetId);
         for(const auto& bufferedChunk : bufferedChunks)
         {
-            const auto& bufferedChunkHeader = bufferedChunk.getHeader();
-            if(bufferedChunkHeader.getPacketId() == packetId && bufferedChunkHeader.getChunkId() == chunkId)
+            if(bufferedChunk.getHeader().getPacketId() == packetId && bufferedChunk.getHeader().getChunkId() == chunkId)
             {
                 return true;
             }

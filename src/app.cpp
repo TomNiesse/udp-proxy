@@ -1,24 +1,18 @@
 #include "app.h"
-#include "limits.h"
 #include "version.h"
 #include "tcptunnelpacketheader.h"
 #include "tcptunnelpacket.h"
 #include <thread>
-#include <iostream>
 #include <QTimer>
 #include <QFile>
 
 #define OPTION_OPERATION_MODE "m"
 #define OPTION_PROXY_LISTEN_ADDRESS "l"
 #define OPTION_PROXY_LISTEN_PORT "p"
-#define OPTION_UDP_TUNNEL_SENDER_LISTEN_ADDRESS "s"
-#define OPTION_UDP_TUNNEL_SENDER_LISTEN_PORT "c"
-#define OPTION_UDP_TUNNEL_SENDER_EGRESS_ADDRESS "e"
-#define OPTION_UDP_TUNNEL_SENDER_EGRESS_PORT "d"
-#define OPTION_UDP_TUNNEL_RECEIVER_LISTEN_ADDRESS "r"
-#define OPTION_UDP_TUNNEL_RECEIVER_LISTEN_PORT "f"
-#define OPTION_UDP_TUNNEL_RECEIVER_EGRESS_ADDRESS "o"
-#define OPTION_UDP_TUNNEL_RECEIVER_EGRESS_PORT "k"
+#define OPTION_UDP_TUNNEL_LISTEN_ADDRESS "s"
+#define OPTION_UDP_TUNNEL_LISTEN_PORT "c"
+#define OPTION_UDP_TUNNEL_EGRESS_ADDRESS "e"
+#define OPTION_UDP_TUNNEL_EGRESS_PORT "d"
 
 App::App(int& argc, char** argv) : QCoreApplication(argc, argv)
 {
@@ -30,14 +24,10 @@ void App::initialize()
     const auto& operationMode = this->parser.value(OPTION_OPERATION_MODE);
     const auto& proxyListenAddress = this->parser.value(OPTION_PROXY_LISTEN_ADDRESS);
     const auto& proxyListenPort = this->parser.value(OPTION_PROXY_LISTEN_PORT);
-    const auto& udpTunnelSenderListenAddress = this->parser.value(OPTION_UDP_TUNNEL_SENDER_LISTEN_ADDRESS);
-    const auto& udpTunnelSenderListenPort = this->parser.value(OPTION_UDP_TUNNEL_SENDER_LISTEN_PORT);
-    const auto& udpTunnelSenderEgressAddress = this->parser.value(OPTION_UDP_TUNNEL_SENDER_EGRESS_ADDRESS);
-    const auto& udpTunnelSenderEgressPort = this->parser.value(OPTION_UDP_TUNNEL_SENDER_EGRESS_PORT);
-    const auto& udpTunnelReceiverListenAddress = this->parser.value(OPTION_UDP_TUNNEL_RECEIVER_LISTEN_ADDRESS);
-    const auto& udpTunnelReceiverListenPort = this->parser.value(OPTION_UDP_TUNNEL_RECEIVER_LISTEN_PORT);
-    const auto& udpTunnelReceiverEgressAddress = this->parser.value(OPTION_UDP_TUNNEL_RECEIVER_EGRESS_ADDRESS);
-    const auto& udpTunnelReceiverEgressPort = this->parser.value(OPTION_UDP_TUNNEL_RECEIVER_EGRESS_PORT);
+    const auto& udpTunnelListenAddress = this->parser.value(OPTION_UDP_TUNNEL_LISTEN_ADDRESS);
+    const auto& udpTunnelListenPort = this->parser.value(OPTION_UDP_TUNNEL_LISTEN_PORT);
+    const auto& udpTunnelEgressAddress = this->parser.value(OPTION_UDP_TUNNEL_EGRESS_ADDRESS);
+    const auto& udpTunnelEgressPort = this->parser.value(OPTION_UDP_TUNNEL_EGRESS_PORT);
 
     qDebug().noquote() << "Application settings:";
     qDebug().noquote() << "Operation mode =" << operationMode;
@@ -46,24 +36,16 @@ void App::initialize()
         qDebug().noquote() << "Proxy listen address =" << proxyListenAddress;
         qDebug().noquote() << "Proxy listen port =" << proxyListenPort;
     }
-    qDebug().noquote() << "UDP tunnel sender listen address =" << udpTunnelSenderListenAddress;
-    qDebug().noquote() << "UDP tunnel sender listen port =" << udpTunnelSenderListenPort;
-    qDebug().noquote() << "UDP tunnel sender egress address =" << udpTunnelSenderEgressAddress;
-    qDebug().noquote() << "UDP tunnel sender egress port =" << udpTunnelSenderEgressPort;
-    qDebug().noquote() << "UDP tunnel receiver listen address =" << udpTunnelReceiverListenAddress;
-    qDebug().noquote() << "UDP tunnel receiver listen port =" << udpTunnelReceiverListenPort;
-    qDebug().noquote() << "UDP tunnel receiver egress address =" << udpTunnelReceiverEgressAddress;
-    qDebug().noquote() << "UDP tunnel receiver egress port =" << udpTunnelReceiverEgressPort;
+    qDebug().noquote() << "UDP tunnel listen address =" << udpTunnelListenAddress;
+    qDebug().noquote() << "UDP tunnel listen port =" << udpTunnelListenPort;
+    qDebug().noquote() << "UDP tunnel egress address =" << udpTunnelEgressAddress;
+    qDebug().noquote() << "UDP tunnel egress port =" << udpTunnelEgressPort;
 
     UDPTunnelConnectionSettings udpTunnelConnectionSettings;
-    udpTunnelConnectionSettings.senderIngressAddress = QHostAddress(udpTunnelSenderListenAddress);
-    udpTunnelConnectionSettings.senderIngressPort = udpTunnelSenderListenPort.toInt();
-    udpTunnelConnectionSettings.senderEgressAddress = QHostAddress(udpTunnelSenderEgressAddress);
-    udpTunnelConnectionSettings.senderEgressPort = udpTunnelSenderEgressPort.toInt();
-    udpTunnelConnectionSettings.receiverIngressAddress = QHostAddress(udpTunnelReceiverListenAddress);
-    udpTunnelConnectionSettings.receiverIngressPort = udpTunnelReceiverListenPort.toInt();
-    udpTunnelConnectionSettings.receiverEgressAddress = QHostAddress(udpTunnelReceiverEgressAddress);
-    udpTunnelConnectionSettings.receiverEgressPort = udpTunnelReceiverEgressPort.toInt();
+    udpTunnelConnectionSettings.setIngressAddress(QByteArray::fromStdString(udpTunnelListenAddress.toStdString()));
+    udpTunnelConnectionSettings.setIngressPort(static_cast<uint16_t>(udpTunnelListenPort.toUInt()));
+    udpTunnelConnectionSettings.setEgressAddress(QByteArray::fromStdString(udpTunnelEgressAddress.toStdString()));
+    udpTunnelConnectionSettings.setEgressPort(static_cast<uint16_t>(udpTunnelEgressPort.toUInt()));
 
     if(operationMode == "proxy")
     {
@@ -76,7 +58,7 @@ void App::initialize()
         });
 
         // Start listening for proxy client connections
-        const bool& result = proxyServer->listen(QHostAddress(proxyListenAddress), static_cast<quint16>(proxyListenPort.toInt()));
+        const bool& result = this->proxyServer->listen(QHostAddress(proxyListenAddress), static_cast<quint16>(proxyListenPort.toInt()));
         if(result)
         {
             qDebug().noquote() << "Proxy server is listening on port" << proxyListenPort;
@@ -85,7 +67,7 @@ void App::initialize()
     else if(operationMode == "client")
     {
         // Create a proxy client with a UDP tunnel
-        this->proxyClient = std::make_unique<ProxyClient>(udpTunnelConnectionSettings);
+        this->clientConnectionManager = std::make_unique<ClientConnectionManager>(udpTunnelConnectionSettings);
     }
     else
     {
@@ -102,14 +84,10 @@ void App::parseCommandLineOptions()
         QCommandLineOption(OPTION_OPERATION_MODE, "Operation mode (\"proxy\" or \"client\")", "operationMode"),
         QCommandLineOption(OPTION_PROXY_LISTEN_ADDRESS, "Proxy listen address (required when operation mode is \"proxy\")", "proxyListenAddress"),
         QCommandLineOption(OPTION_PROXY_LISTEN_PORT, "Proxy listen port (required when operation mode is \"proxy\")", "proxyListenPort"),
-        QCommandLineOption(OPTION_UDP_TUNNEL_SENDER_LISTEN_ADDRESS, "UDP tunnel sender listen address", "udpTunnelSenderListenAddress"),
-        QCommandLineOption(OPTION_UDP_TUNNEL_SENDER_LISTEN_PORT, "UDP tunnel sender listen port", "udpTunnelSenderListenPort"),
-        QCommandLineOption(OPTION_UDP_TUNNEL_SENDER_EGRESS_ADDRESS, "UDP tunnel sender egress address", "udpTunnelSenderEgressAddress"),
-        QCommandLineOption(OPTION_UDP_TUNNEL_SENDER_EGRESS_PORT, "UDP tunnel sender egress port", "udpTunnelSenderEgressPort"),
-        QCommandLineOption(OPTION_UDP_TUNNEL_RECEIVER_LISTEN_ADDRESS, "UDP tunnel receiver listen address", "udpTunnelReceiverListenAddress"),
-        QCommandLineOption(OPTION_UDP_TUNNEL_RECEIVER_LISTEN_PORT, "UDP tunnel receiver listen port", "udpTunnelReceiverListenPort"),
-        QCommandLineOption(OPTION_UDP_TUNNEL_RECEIVER_EGRESS_ADDRESS, "UDP tunnel receiver egress address", "udpTunnelReceiverEgressAddress"),
-        QCommandLineOption(OPTION_UDP_TUNNEL_RECEIVER_EGRESS_PORT, "UDP tunnel receiver egress port", "udpTunnelReceiverEgressPort")
+        QCommandLineOption(OPTION_UDP_TUNNEL_LISTEN_ADDRESS, "UDP tunnel sender listen address", "udpTunnelSenderListenAddress"),
+        QCommandLineOption(OPTION_UDP_TUNNEL_LISTEN_PORT, "UDP tunnel sender listen port", "udpTunnelSenderListenPort"),
+        QCommandLineOption(OPTION_UDP_TUNNEL_EGRESS_ADDRESS, "UDP tunnel sender egress address", "udpTunnelSenderEgressAddress"),
+        QCommandLineOption(OPTION_UDP_TUNNEL_EGRESS_PORT, "UDP tunnel sender egress port", "udpTunnelSenderEgressPort")
     };
     for(const auto& commandLineOption : commandLineOptions)
     {
@@ -170,50 +148,26 @@ void App::checkCommandLineOptions(QCommandLineParser& parser)
     }
 
     // Check if the listen address and listen port are given for the UDP tunnel sender
-    if(!parser.isSet(OPTION_UDP_TUNNEL_SENDER_LISTEN_ADDRESS))
+    if(!parser.isSet(OPTION_UDP_TUNNEL_LISTEN_ADDRESS))
     {
         qDebug().noquote() << "No listen address for the UDP tunnel packet sender was given. Exiting";
         std::exit(EXIT_FAILURE);
     }
-    if(!parser.isSet(OPTION_UDP_TUNNEL_SENDER_LISTEN_PORT))
+    if(!parser.isSet(OPTION_UDP_TUNNEL_LISTEN_PORT))
     {
         qDebug().noquote() << "No listen port for the UDP tunnel packet sender was given. Exiting";
         std::exit(EXIT_FAILURE);
     }
 
     // Check if the egress address and egress port are given for the UDP tunnel sender
-    if(!parser.isSet(OPTION_UDP_TUNNEL_SENDER_EGRESS_ADDRESS))
+    if(!parser.isSet(OPTION_UDP_TUNNEL_EGRESS_ADDRESS))
     {
         qDebug().noquote() << "No egress address for the UDP tunnel packet sender was given. Exiting";
         std::exit(EXIT_FAILURE);
     }
-    if(!parser.isSet(OPTION_UDP_TUNNEL_SENDER_EGRESS_PORT))
+    if(!parser.isSet(OPTION_UDP_TUNNEL_EGRESS_PORT))
     {
         qDebug().noquote() << "No egress port for the UDP tunnel packet sender was given. Exiting";
-        std::exit(EXIT_FAILURE);
-    }
-
-    // Check if the listen address and listen port are given for the UDP tunnel receiver
-    if(!parser.isSet(OPTION_UDP_TUNNEL_RECEIVER_LISTEN_ADDRESS))
-    {
-        qDebug().noquote() << "No listen address for the UDP tunnel packet receiver was given. Exiting";
-        std::exit(EXIT_FAILURE);
-    }
-    if(!parser.isSet(OPTION_UDP_TUNNEL_RECEIVER_LISTEN_PORT))
-    {
-        qDebug().noquote() << "No listen port for the UDP tunnel packet receiver was given. Exiting";
-        std::exit(EXIT_FAILURE);
-    }
-
-    // Check if the egress address and egress port are given for the UDP tunnel receiver
-    if(!parser.isSet(OPTION_UDP_TUNNEL_RECEIVER_EGRESS_ADDRESS))
-    {
-        qDebug().noquote() << "No egress address for the UDP tunnel packet receiver was given. Exiting";
-        std::exit(EXIT_FAILURE);
-    }
-    if(!parser.isSet(OPTION_UDP_TUNNEL_RECEIVER_EGRESS_PORT))
-    {
-        qDebug().noquote() << "No egress port for the UDP tunnel packet receiver was given. Exiting";
         std::exit(EXIT_FAILURE);
     }
 }
@@ -230,11 +184,11 @@ void App::printHelpInformation(const std::vector<QCommandLineOption>& commandLin
         qDebug().noquote() << QString("-%1").arg(commandLineOption.names().at(0)) << "\t" << "\t" << commandLineOption.description();
     }
     qDebug().noquote() << "";
-    qDebug().noquote() << "Example usage (proxy server mode with network traffic going to/from 127.0.0.1):";
-    qDebug().noquote() << QString("./udpproxy -%1 proxy -%2 0.0.0.0 -%3 8080 -%4 0.0.0.0 -%5 1111 -%6 127.0.0.1 -%7 2222 -%8 0.0.0.0 -%9 3333 -%10 127.0.0.1 -%11 4444").arg(OPTION_OPERATION_MODE, OPTION_PROXY_LISTEN_ADDRESS, OPTION_PROXY_LISTEN_PORT, OPTION_UDP_TUNNEL_SENDER_LISTEN_ADDRESS, OPTION_UDP_TUNNEL_SENDER_LISTEN_PORT, OPTION_UDP_TUNNEL_SENDER_EGRESS_ADDRESS, OPTION_UDP_TUNNEL_SENDER_EGRESS_PORT, OPTION_UDP_TUNNEL_RECEIVER_LISTEN_ADDRESS, OPTION_UDP_TUNNEL_RECEIVER_LISTEN_PORT, OPTION_UDP_TUNNEL_RECEIVER_EGRESS_ADDRESS, OPTION_UDP_TUNNEL_RECEIVER_EGRESS_PORT);
+    qDebug().noquote() << "Example usage (proxy server mode with network traffic going to/from 0.0.0.0):";
+    qDebug().noquote() << QString("./udpproxy -%1 proxy -%2 0.0.0.0 -%3 8080 -%4 0.0.0.0 -%5 1111 -%6 127.0.0.1 -%7 2222").arg(OPTION_OPERATION_MODE, OPTION_PROXY_LISTEN_ADDRESS, OPTION_PROXY_LISTEN_PORT, OPTION_UDP_TUNNEL_LISTEN_ADDRESS, OPTION_UDP_TUNNEL_LISTEN_PORT, OPTION_UDP_TUNNEL_EGRESS_ADDRESS, OPTION_UDP_TUNNEL_EGRESS_PORT);
     qDebug().noquote() << "";
-    qDebug().noquote() << "Example usage (proxy client mode with network traffic going to/from 127.0.0.1):";
-    qDebug().noquote() << QString("./udpproxy -%1 client -%2 0.0.0.0 -%3 4444 -%4 127.0.0.1 -%5 3333 -%6 0.0.0.0 -%7 2222 -%8 127.0.0.1 -%9 1111").arg(OPTION_OPERATION_MODE, OPTION_UDP_TUNNEL_SENDER_LISTEN_ADDRESS, OPTION_UDP_TUNNEL_SENDER_LISTEN_PORT, OPTION_UDP_TUNNEL_SENDER_EGRESS_ADDRESS, OPTION_UDP_TUNNEL_SENDER_EGRESS_PORT, OPTION_UDP_TUNNEL_RECEIVER_LISTEN_ADDRESS, OPTION_UDP_TUNNEL_RECEIVER_LISTEN_PORT, OPTION_UDP_TUNNEL_RECEIVER_EGRESS_ADDRESS, OPTION_UDP_TUNNEL_RECEIVER_EGRESS_PORT);
+    qDebug().noquote() << "Example usage (proxy client mode with network traffic going to/from 0.0.0.0):";
+    qDebug().noquote() << QString("./udpproxy -%1 client -%2 0.0.0.0 -%3 2222 -%4 127.0.0.1 -%5 1111").arg(OPTION_OPERATION_MODE, OPTION_UDP_TUNNEL_LISTEN_ADDRESS, OPTION_UDP_TUNNEL_LISTEN_PORT, OPTION_UDP_TUNNEL_EGRESS_ADDRESS, OPTION_UDP_TUNNEL_EGRESS_PORT);
     qDebug().noquote() << "";
 }
 

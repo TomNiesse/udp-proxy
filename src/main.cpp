@@ -1,7 +1,5 @@
 #include "app.h"
 #include "version.h"
-#include <QTimer>
-#include <QCommandLineParser>
 
 int main(int argc, char *argv[])
 {

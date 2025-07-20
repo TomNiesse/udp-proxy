@@ -5,7 +5,7 @@
 #include <QCoreApplication>
 #include <QCommandLineParser>
 #include "proxyserver.h"
-#include "proxyclient.h"
+#include "clientconnectionmanager.h"
 
 class App : public QCoreApplication
 {
@@ -24,7 +24,7 @@ private:
     QCommandLineParser parser;
 
     std::unique_ptr<ProxyServer> proxyServer;
-    std::unique_ptr<ProxyClient> proxyClient;
+    std::unique_ptr<ClientConnectionManager> clientConnectionManager;
 };
 
 #endif // APP_H

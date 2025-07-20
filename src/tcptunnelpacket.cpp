@@ -1,6 +1,6 @@
 #include "tcptunnelpacket.h"
 
-const QByteArray TCPTunnelPacket::encode(TCPTunnelPacketHeader& header, const QByteArray& payload)
+const QByteArray TCPTunnelPacket::encode(const TCPTunnelPacketHeader& header, const QByteArray& payload)
 {
     QByteArray out;
     out.push_back(header.encode());
