@@ -84,10 +84,10 @@ void App::parseCommandLineOptions()
         QCommandLineOption(OPTION_OPERATION_MODE, "Operation mode (\"proxy\" or \"client\")", "operationMode"),
         QCommandLineOption(OPTION_PROXY_LISTEN_ADDRESS, "Proxy listen address (required when operation mode is \"proxy\")", "proxyListenAddress"),
         QCommandLineOption(OPTION_PROXY_LISTEN_PORT, "Proxy listen port (required when operation mode is \"proxy\")", "proxyListenPort"),
-        QCommandLineOption(OPTION_UDP_TUNNEL_LISTEN_ADDRESS, "UDP tunnel sender listen address", "udpTunnelSenderListenAddress"),
-        QCommandLineOption(OPTION_UDP_TUNNEL_LISTEN_PORT, "UDP tunnel sender listen port", "udpTunnelSenderListenPort"),
-        QCommandLineOption(OPTION_UDP_TUNNEL_EGRESS_ADDRESS, "UDP tunnel sender egress address", "udpTunnelSenderEgressAddress"),
-        QCommandLineOption(OPTION_UDP_TUNNEL_EGRESS_PORT, "UDP tunnel sender egress port", "udpTunnelSenderEgressPort")
+        QCommandLineOption(OPTION_UDP_TUNNEL_LISTEN_ADDRESS, "UDP tunnel connection listen address", "udpTunnelSenderListenAddress"),
+        QCommandLineOption(OPTION_UDP_TUNNEL_LISTEN_PORT, "UDP tunnel connection listen port", "udpTunnelSenderListenPort"),
+        QCommandLineOption(OPTION_UDP_TUNNEL_EGRESS_ADDRESS, "UDP tunnel connection egress address", "udpTunnelSenderEgressAddress"),
+        QCommandLineOption(OPTION_UDP_TUNNEL_EGRESS_PORT, "UDP tunnel connection egress port", "udpTunnelSenderEgressPort")
     };
     for(const auto& commandLineOption : commandLineOptions)
     {
