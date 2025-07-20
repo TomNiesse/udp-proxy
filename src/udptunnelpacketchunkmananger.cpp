@@ -2,7 +2,7 @@
 
 void UDPTunnelPacketChunkMananger::addChunk(const UDPTunnelPacket& chunk)
 {
-    const QMutexLocker lock(&this->chunksMutex);
+    const QMutexLocker lock(&this->lock);
 
     const auto& packetId = chunk.getHeader().getPacketId();
     if(this->chunks.find(packetId) == this->chunks.end())
@@ -23,7 +23,7 @@ const std::vector<QByteArray> UDPTunnelPacketChunkMananger::split(const QByteArr
 
 const QByteArray UDPTunnelPacketChunkMananger::convertChunksToPayload(const size_t& packetId)
 {
-    const QMutexLocker lock(&this->chunksMutex);
+    const QMutexLocker lock(&this->lock);
     if(this->chunks.find(packetId) == this->chunks.end())
     {
         return {};
