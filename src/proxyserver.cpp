@@ -50,7 +50,7 @@ void ProxyServer::communicationThread(const qintptr socketDescriptor, const UDPT
                     const auto& hostAndPort = ProxyRequest::extractHostAndPort(data);
                     const auto& host = hostAndPort.first;
                     const auto& port = hostAndPort.second;
-                    hostConnection.connectToHost(host, port);
+                        hostConnection.connectToHost(host, port);
                     proxyConnectionState = ProxyConnectionState::COMMUNICATION;
                 }
                 else
@@ -69,13 +69,11 @@ void ProxyServer::communicationThread(const qintptr socketDescriptor, const UDPT
     QObject::connect(&hostConnection, &HostConnection::clientIsConnected, this, [this, &proxyServerSocket](){
         const auto& connectionEstablished = QByteArray("HTTP/1.1 200 Connection Established\r\n\r\n");
         proxyServerSocket.write(connectionEstablished);
-        proxyServerSocket.flush();
     }, Qt::DirectConnection);
 
     // Forward received TCP data to the proxy client
     QObject::connect(&hostConnection, &HostConnection::receivedData, this, [this, &proxyServerSocket](const QByteArray& data){
         proxyServerSocket.write(data);
-        proxyServerSocket.flush();
     }, Qt::DirectConnection);
 
     // When the proxy client disconnects, this thread needs to stop

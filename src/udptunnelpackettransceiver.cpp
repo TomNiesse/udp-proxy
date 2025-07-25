@@ -93,7 +93,6 @@ void UDPTunnelPacketTransceiver::sendData(const int& timeout)
             do
             {
                 egressSocket.writeDatagram(data, QHostAddress(this->egressAddress), this->egressPort);
-                egressSocket.flush();
                 const bool hybridMode = false;
                 if(hybridMode == true)
                 {
@@ -200,5 +199,4 @@ void UDPTunnelPacketTransceiver::sendUdpAcknowledgement(const UDPTunnelPacket& u
 
     QUdpSocket egressSocket;
     egressSocket.writeDatagram(acknowledgementPacket.encode(), QHostAddress(this->egressAddress), this->egressPort);
-    egressSocket.flush();
 }
