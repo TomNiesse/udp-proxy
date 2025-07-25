@@ -20,7 +20,7 @@ const QString ProxyRequest::extractCommand(const QString& proxyRequest)
 {
     for(qsizetype pos = 0; pos < proxyRequest.length(); pos++)
     {
-        if(proxyRequest[pos] == " ")
+        if(proxyRequest[pos] == ' ')
         {
             const auto& command = proxyRequest.mid(0, pos);
             return command.toUpper();

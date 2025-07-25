@@ -20,8 +20,8 @@ void ProxyServer::incomingConnection(const qintptr socketDescriptor)
         const auto& hostUdpTunnelConnectionSettings = udpTunnelConnectionSettings.first;
         const auto& clientUdpTunnelConnectionSettings = udpTunnelConnectionSettings.second;
 
-        this->hostConnectionManager->openConnection(hostUdpTunnelConnectionSettings);
-        std::thread(&ProxyServer::communicationThread, this, socketDescriptor, clientUdpTunnelConnectionSettings).detach();
+        this->hostConnectionManager->openConnection(clientUdpTunnelConnectionSettings);
+        std::thread(&ProxyServer::communicationThread, this, socketDescriptor, hostUdpTunnelConnectionSettings).detach();
     });
 }
 
@@ -77,8 +77,8 @@ void ProxyServer::communicationThread(const qintptr socketDescriptor, const UDPT
     }, Qt::DirectConnection);
 
     // When the proxy client disconnects, this thread needs to stop
-    QObject::connect(&hostConnection, &HostConnection::clientWasDisconnected, &eventLoop, QEventLoop::quit, Qt::DirectConnection);
-    QObject::connect(&proxyServerSocket, &QTcpSocket::disconnected, &eventLoop, QEventLoop::quit, Qt::DirectConnection);
+    QObject::connect(&hostConnection, &HostConnection::clientWasDisconnected, &eventLoop, &QEventLoop::quit, Qt::DirectConnection);
+    QObject::connect(&proxyServerSocket, &QTcpSocket::disconnected, &eventLoop, &QEventLoop::quit, Qt::DirectConnection);
 
     // Run event loop
     eventLoop.exec();
@@ -87,8 +87,8 @@ void ProxyServer::communicationThread(const qintptr socketDescriptor, const UDPT
     QObject::disconnect(&proxyServerSocket, &QTcpSocket::readyRead, this, nullptr);
     QObject::disconnect(&hostConnection, &HostConnection::clientIsConnected, this, nullptr);
     QObject::disconnect(&hostConnection, &HostConnection::receivedData, this, nullptr);
-    QObject::disconnect(&hostConnection, &HostConnection::clientWasDisconnected, &eventLoop, QEventLoop::quit);
-    QObject::disconnect(&proxyServerSocket, &QTcpSocket::disconnected, &eventLoop, QEventLoop::quit);
+    QObject::disconnect(&hostConnection, &HostConnection::clientWasDisconnected, &eventLoop, &QEventLoop::quit);
+    QObject::disconnect(&proxyServerSocket, &QTcpSocket::disconnected, &eventLoop, &QEventLoop::quit);
 
     // Stop the thread that handles the TCP client traffic
     proxyConnectionState = ProxyConnectionState::STOP_CLIENT;

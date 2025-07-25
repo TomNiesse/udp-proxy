@@ -24,7 +24,7 @@ ClientConnectionManager::~ClientConnectionManager()
 void ClientConnectionManager::handleReceivedData(const QByteArray& data)
 {
     const auto& udpTunnelConnectionSettings = UDPTunnelConnectionSettings(data);
-    std::thread(clientConnectionThread, this, udpTunnelConnectionSettings).detach();
+    std::thread(&ClientConnectionManager::clientConnectionThread, this, udpTunnelConnectionSettings).detach();
 
     TCPTunnelPacketHeader tcpTunnelPacketHeader;
     tcpTunnelPacketHeader.setPacketType(TCPTunnelPacketHeaderType::TCP_CONNECTION_OPENED);
