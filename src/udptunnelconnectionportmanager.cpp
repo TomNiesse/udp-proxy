@@ -19,7 +19,7 @@ const std::pair<UDPTunnelConnectionSettings, UDPTunnelConnectionSettings> UDPTun
     const auto& usedPorts = this->requestPorts();
 
     UDPTunnelConnectionSettings hostUdpTunnelConnectionSettings(udpTunnelConnectionSettings.getIngressAddress(), udpTunnelConnectionSettings.getIngressPort(), udpTunnelConnectionSettings.getEgressAddress(), udpTunnelConnectionSettings.getEgressPort());
-    UDPTunnelConnectionSettings clientUdpTunnelConnectionSettings(udpTunnelConnectionSettings.getIngressAddress(), udpTunnelConnectionSettings.getIngressPort(), udpTunnelConnectionSettings.getEgressAddress(), udpTunnelConnectionSettings.getEgressPort());
+    UDPTunnelConnectionSettings clientUdpTunnelConnectionSettings(udpTunnelConnectionSettings.getEgressAddress(), udpTunnelConnectionSettings.getIngressPort(), udpTunnelConnectionSettings.getIngressAddress(), udpTunnelConnectionSettings.getEgressPort());
 
     hostUdpTunnelConnectionSettings.setIngressPort(usedPorts.at(0));
     hostUdpTunnelConnectionSettings.setEgressPort(usedPorts.at(1));
