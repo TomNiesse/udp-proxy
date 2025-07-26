@@ -184,10 +184,10 @@ void App::printHelpInformation(const std::vector<QCommandLineOption>& commandLin
         qDebug().noquote() << QString("-%1").arg(commandLineOption.names().at(0)) << "\t" << "\t" << commandLineOption.description();
     }
     qDebug().noquote() << "";
-    qDebug().noquote() << "Example usage (proxy server mode with network traffic going from 0.0.0.0 to 127.0.0.1):";
+    qDebug().noquote() << "Example usage (proxy server mode with network traffic going from 127.0.0.1 to 0.0.0.0):";
     qDebug().noquote() << QString("./udpproxy -%1 proxy -%2 0.0.0.0 -%3 8080 -%4 0.0.0.0 -%5 1111 -%6 127.0.0.1 -%7 2222").arg(OPTION_OPERATION_MODE, OPTION_PROXY_LISTEN_ADDRESS, OPTION_PROXY_LISTEN_PORT, OPTION_UDP_TUNNEL_LISTEN_ADDRESS, OPTION_UDP_TUNNEL_LISTEN_PORT, OPTION_UDP_TUNNEL_EGRESS_ADDRESS, OPTION_UDP_TUNNEL_EGRESS_PORT);
     qDebug().noquote() << "";
-    qDebug().noquote() << "Example usage (proxy client mode with network traffic going from 0.0.0.0 to 127.0.0.1):";
+    qDebug().noquote() << "Example usage (proxy client mode with network traffic going from 127.0.0.1 to 0.0.0.0):";
     qDebug().noquote() << QString("./udpproxy -%1 client -%2 0.0.0.0 -%3 2222 -%4 127.0.0.1 -%5 1111").arg(OPTION_OPERATION_MODE, OPTION_UDP_TUNNEL_LISTEN_ADDRESS, OPTION_UDP_TUNNEL_LISTEN_PORT, OPTION_UDP_TUNNEL_EGRESS_ADDRESS, OPTION_UDP_TUNNEL_EGRESS_PORT);
     qDebug().noquote() << "";
 }
