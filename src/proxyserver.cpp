@@ -8,7 +8,7 @@
 ProxyServer::ProxyServer(const UDPTunnelConnectionSettings& udpTunnelConnectionSettings)
 {
     this->hostConnectionManager = std::make_unique<HostConnectionManager>(udpTunnelConnectionSettings);
-    this->portManager = std::make_unique<UDPTunnelConnectionPortManager>(UDPTunnelConnectionPortManager::generatePortList(50000, 60000));
+    this->portManager = std::make_unique<UDPTunnelConnectionPortManager>(UDPTunnelConnectionPortManager::generatePortList(60000, 65000));
 }
 
 void ProxyServer::incomingConnection(const qintptr socketDescriptor)
