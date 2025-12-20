@@ -1,10 +1,8 @@
 #include "app.h"
 #include "version.h"
-#include "tcptunnelpacketheader.h"
-#include "tcptunnelpacket.h"
-#include <thread>
 #include <QTimer>
 #include <QFile>
+#include <QDebug>
 
 #define OPTION_OPERATION_MODE "m"
 #define OPTION_PROXY_LISTEN_ADDRESS "l"

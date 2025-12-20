@@ -2,9 +2,7 @@
 #define UDPTUNNELCONNECTION_H
 
 #include "udptunnelpackettransceiver.h"
-#include "udptunnelpacketreceiver.h"
 #include "udptunnelconnectionsettings.h"
-#include <vector>
 #include <QByteArray>
 #include <QMutex>
 

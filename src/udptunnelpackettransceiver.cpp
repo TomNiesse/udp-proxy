@@ -3,6 +3,7 @@
 #include <QEventLoop>
 #include <QNetworkDatagram>
 #include <QCoreApplication>
+#include <QDebug>
 
 UDPTunnelPacketTransceiver::UDPTunnelPacketTransceiver(const QString& ingressAddress, const uint16_t& ingressPort, const QString& egressAddress, const uint16_t& egressPort)
 {
