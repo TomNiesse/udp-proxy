@@ -2,6 +2,7 @@
 #define UDPTUNNELCONNECTIONSETTINGS_H
 
 #include <QByteArray>
+#include <QString>
 
 class UDPTunnelConnectionSettings
 {
@@ -20,6 +21,8 @@ public:
     uint16_t getEgressPort() const;
     void setEgressPort(const uint16_t& egressPort);
 
+    const QString toString() const;
+
 private:
     static const QByteArray encode(const QByteArray& ingressAddress, const uint16_t& igressPort, const QByteArray& egressAddress, const uint16_t& egressPort);
     static const std::tuple<QByteArray, uint16_t, QByteArray, uint16_t> decode(const QByteArray data);
@@ -28,6 +31,8 @@ private:
     uint16_t ingressPort = 0;
     QByteArray egressAddress = "127.0.0.1";
     uint16_t egressPort = 0;
+
+    friend class test_udptunnelconnectionsettings;
 };
 
 #endif // UDPTUNNELCONNECTIONSETTINGS_H

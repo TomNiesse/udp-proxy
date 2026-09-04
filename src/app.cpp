@@ -3,6 +3,7 @@
 #include <QTimer>
 #include <QFile>
 #include <QDebug>
+#include <QDateTime>
 
 #define OPTION_OPERATION_MODE "m"
 #define OPTION_PROXY_LISTEN_ADDRESS "l"
@@ -47,29 +48,29 @@ void App::initialize()
 
     if(operationMode == "proxy")
     {
-        // Create a proxy server with a UDP tunnel
-        this->proxyServer = std::make_unique<ProxyServer>(udpTunnelConnectionSettings);
+        // // Create a proxy server with a UDP tunnel
+        // this->proxyServer = std::make_unique<ProxyServer>(udpTunnelConnectionSettings);
 
-        // When a client connects, keep listening for new connections
-        QObject::connect(this->proxyServer.get(), &ProxyServer::newConnection, this, [this](){
-            this->proxyServer->waitForNewConnection();
-        });
+        // // When a client connects, keep listening for new connections
+        // QObject::connect(this->proxyServer.get(), &ProxyServer::newConnection, this, [this](){
+        //     this->proxyServer->waitForNewConnection();
+        // });
 
-        // Start listening for proxy client connections
-        const bool& result = this->proxyServer->listen(QHostAddress(proxyListenAddress), static_cast<quint16>(proxyListenPort.toInt()));
-        if(result)
-        {
-            qDebug().noquote() << "Proxy server is listening on port" << proxyListenPort;
-        }
+        // // Start listening for proxy client connections
+        // const bool& result = this->proxyServer->listen(QHostAddress(proxyListenAddress), static_cast<quint16>(proxyListenPort.toInt()));
+        // if(result)
+        // {
+        //     qDebug().noquote() << "Proxy server is listening on port" << proxyListenPort;
+        // }
     }
     else if(operationMode == "client")
     {
         // Create a proxy client with a UDP tunnel
-        this->clientConnectionManager = std::make_unique<ClientConnectionManager>(udpTunnelConnectionSettings);
+        // this->clientConnectionManager = std::make_unique<TCPClientConnectionManager>(udpTunnelConnectionSettings);
     }
     else
     {
-        qDebug() << "Invalid operation mode was set. Exiting.";
+        qDebug() << QDateTime::currentDateTime() << "Invalid operation mode was set. Exiting.";
         std::exit(EXIT_FAILURE);
     }
 }
@@ -102,7 +103,7 @@ void App::parseCommandLineOptions()
     if (this->parser.isSet(helpOption))
     {
         App::printLicenceInformation();
-        qDebug() << "";
+        qDebug() << QDateTime::currentDateTime() << "";
         App::printHelpInformation(commandLineOptions);
         std::exit(EXIT_SUCCESS);
     }

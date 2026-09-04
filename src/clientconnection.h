@@ -6,12 +6,14 @@
 #include <QObject>
 #include <QEventLoop>
 
+// TODO: remove this file(?)
+
 class ClientConnection : public QObject
 {
     Q_OBJECT
     Q_DISABLE_COPY_MOVE(ClientConnection)
 public:
-    explicit ClientConnection(const UDPTunnelConnectionSettings& udpTunnelConnectionSettings);
+    explicit ClientConnection(const UDPTunnelConnectionSettings& senderUdpTunnelConnectionSettings, const UDPTunnelConnectionSettings& receiverUdpTunnelConnectionSettings);
     ~ClientConnection();
     QEventLoop& getEventLoop();
 
@@ -29,8 +31,9 @@ private:
     void quit();
 
     QTcpSocket tcpSocket;
-    std::unique_ptr<UDPTunnelConnectionSettings> udpTunnelConnectionSettings;
-    std::unique_ptr<UDPTunnelConnection> udpTunnel;
+    UDPTunnelConnectionSettings senderUdpTunnelConnectionSettings;
+    UDPTunnelConnectionSettings receiverUdpTunnelConnectionSettings;
+    std::unique_ptr<UDPTunnelConnection> udpTunnelConnection;
     QEventLoop eventLoop;
 };
 

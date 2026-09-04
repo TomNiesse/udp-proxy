@@ -9,13 +9,12 @@ TCPTunnelPacketHeader::TCPTunnelPacketHeader()
     this->host = "";
 }
 
-TCPTunnelPacketHeader::TCPTunnelPacketHeader(const QByteArray& encodedData)
+TCPTunnelPacketHeader::TCPTunnelPacketHeader(const QByteArray& data)
 {
-    const auto& decodedData = TCPTunnelPacketHeader::decode(encodedData);
-    this->packetType = std::get<0>(decodedData);
-    this->port = std::get<1>(decodedData);
-    // const auto hostStringSize = std::get<2>(decodedData);
-    this->host = std::get<3>(decodedData);
+    TCPTunnelPacketHeader tcpTunnelPacketHeader = TCPTunnelPacketHeader::decode(data);
+    this->setPacketType(tcpTunnelPacketHeader.getPacketType());
+    this->setHost(tcpTunnelPacketHeader.getHost());
+    this->setPort(tcpTunnelPacketHeader.getPort());
 }
 
 const TCPTunnelPacketHeaderType& TCPTunnelPacketHeader::getPacketType() const
@@ -50,12 +49,38 @@ void TCPTunnelPacketHeader::setPort(const uint16_t& port)
 
 const QByteArray TCPTunnelPacketHeader::encode() const
 {
-    return TCPTunnelPacketHeader::encode(this->packetType, this->host, this->port);
+    switch(this->packetType)
+    {
+    case TCPTunnelPacketHeaderType::TCP_OPEN_CONNECTION:
+        return encodeConnectRequest(this->packetType, this->host, this->port);
+    case TCPTunnelPacketHeaderType::TCP_CLOSE_CONNECTION:
+        return encodeDisconnectRequest(this->packetType);
+    case TCPTunnelPacketHeaderType::TCP_SEND_DATA:
+        return encodeWriteRequest(this->packetType);
+    case TCPTunnelPacketHeaderType::TCP_CONNECTION_OPENED:
+        return encodeConnectResponse(this->packetType);
+    case TCPTunnelPacketHeaderType::TCP_CONNECTION_CLOSED:
+        return encodeDisconnectResponse(this->packetType);
+    case TCPTunnelPacketHeaderType::TCP_CONNECTION_TIMEOUT:
+        return encodeTimeoutResponse(this->packetType);
+    case TCPTunnelPacketHeaderType::TCP_DATA_SENT:
+        return encodeBytesWritten(this->packetType);
+    case TCPTunnelPacketHeaderType::TCP_RECEIVED_DATA:
+        return encodeBytesReceived(this->packetType);
+    }
+
+    return {};
+}
+
+const size_t TCPTunnelPacketHeader::headerSize() const
+{
+    // TODO: improve this! this function can be much faster with a switch-case!
+    return this->encode().size();
 }
 
 // Private
 
-const QByteArray TCPTunnelPacketHeader::encode(const TCPTunnelPacketHeaderType& packetType, const QByteArray& host, const uint16_t& port)
+const QByteArray TCPTunnelPacketHeader::encodeConnectRequest(const TCPTunnelPacketHeaderType& packetType, const QByteArray& host, const uint16_t& port)
 {
     char packetTypeBytes[sizeof(packetType)] = {0};
     memcpy(packetTypeBytes, (void*)&packetType, sizeof(packetType));
@@ -79,55 +104,183 @@ const QByteArray TCPTunnelPacketHeader::encode(const TCPTunnelPacketHeaderType& 
     return out;
 }
 
-const std::tuple<TCPTunnelPacketHeaderType, uint16_t, size_t, QByteArray> TCPTunnelPacketHeader::decode(const QByteArray& encodedData)
+const QByteArray TCPTunnelPacketHeader::encodeDisconnectRequest(const TCPTunnelPacketHeaderType& packetType)
 {
-    TCPTunnelPacketHeaderType packetType = TCPTunnelPacketHeaderType::TCP_INVALID;
-    memcpy(&packetType, encodedData.mid(0).constData(), sizeof(TCPTunnelPacketHeaderType));
+    char packetTypeBytes[sizeof(packetType)] = {0};
+    memcpy(packetTypeBytes, (void*)&packetType, sizeof(packetType));
+    QByteArray encodedPacketType = QByteArray(packetTypeBytes, sizeof(packetType));
 
+    QByteArray out;
+    out.push_back(encodedPacketType);
+
+    return out;
+}
+
+const QByteArray TCPTunnelPacketHeader::encodeWriteRequest(const TCPTunnelPacketHeaderType& packetType)
+{
+    char packetTypeBytes[sizeof(packetType)] = {0};
+    memcpy(packetTypeBytes, (void*)&packetType, sizeof(packetType));
+    QByteArray encodedPacketType = QByteArray(packetTypeBytes, sizeof(packetType));
+
+    QByteArray out;
+    out.push_back(encodedPacketType);
+
+    return out;
+}
+
+const QByteArray TCPTunnelPacketHeader::encodeConnectResponse(const TCPTunnelPacketHeaderType& packetType)
+{
+    char packetTypeBytes[sizeof(packetType)] = {0};
+    memcpy(packetTypeBytes, (void*)&packetType, sizeof(packetType));
+    QByteArray encodedPacketType = QByteArray(packetTypeBytes, sizeof(packetType));
+
+    QByteArray out;
+    out.push_back(encodedPacketType);
+
+    return out;
+}
+
+const QByteArray TCPTunnelPacketHeader::encodeDisconnectResponse(const TCPTunnelPacketHeaderType& packetType)
+{
+    char packetTypeBytes[sizeof(packetType)] = {0};
+    memcpy(packetTypeBytes, (void*)&packetType, sizeof(packetType));
+    QByteArray encodedPacketType = QByteArray(packetTypeBytes, sizeof(packetType));
+
+    QByteArray out;
+    out.push_back(encodedPacketType);
+
+    return out;
+}
+
+const QByteArray TCPTunnelPacketHeader::encodeTimeoutResponse(const TCPTunnelPacketHeaderType& packetType)
+{
+    char packetTypeBytes[sizeof(packetType)] = {0};
+    memcpy(packetTypeBytes, (void*)&packetType, sizeof(packetType));
+    QByteArray encodedPacketType = QByteArray(packetTypeBytes, sizeof(packetType));
+
+    QByteArray out;
+    out.push_back(encodedPacketType);
+
+    return out;
+}
+
+const QByteArray TCPTunnelPacketHeader::encodeBytesWritten(const TCPTunnelPacketHeaderType& packetType)
+{
+    char packetTypeBytes[sizeof(packetType)] = {0};
+    memcpy(packetTypeBytes, (void*)&packetType, sizeof(packetType));
+    QByteArray encodedPacketType = QByteArray(packetTypeBytes, sizeof(packetType));
+
+    QByteArray out;
+    out.push_back(encodedPacketType);
+
+    return out;
+}
+
+const QByteArray TCPTunnelPacketHeader::encodeBytesReceived(const TCPTunnelPacketHeaderType& packetType)
+{
+    char packetTypeBytes[sizeof(packetType)] = {0};
+    memcpy(packetTypeBytes, (void*)&packetType, sizeof(packetType));
+    QByteArray encodedPacketType = QByteArray(packetTypeBytes, sizeof(packetType));
+
+    QByteArray out;
+    out.push_back(encodedPacketType);
+
+    return out;
+}
+
+const TCPTunnelPacketHeader TCPTunnelPacketHeader::decode(const QByteArray& data)
+{
+    if(data.size() > 0)
+    {
+        TCPTunnelPacketHeaderType packetType = TCPTunnelPacketHeaderType::TCP_INVALID;
+        memcpy(&packetType, data.mid(0).constData(), sizeof(TCPTunnelPacketHeaderType));
+        switch(packetType)
+        {
+        case TCPTunnelPacketHeaderType::TCP_OPEN_CONNECTION:
+            return decodeConnectRequest(packetType, data);
+        case TCPTunnelPacketHeaderType::TCP_CLOSE_CONNECTION:
+            return decodeDisconnectRequest(packetType);
+        case TCPTunnelPacketHeaderType::TCP_SEND_DATA:
+            return decodeWriteRequest(packetType);
+        case TCPTunnelPacketHeaderType::TCP_CONNECTION_OPENED:
+            return decodeConnectResponse(packetType);
+        case TCPTunnelPacketHeaderType::TCP_CONNECTION_CLOSED:
+            return decodeDisconnectResponse(packetType);
+        case TCPTunnelPacketHeaderType::TCP_CONNECTION_TIMEOUT:
+            return decodeTimeout(packetType);
+        case TCPTunnelPacketHeaderType::TCP_DATA_SENT:
+            return decodeBytesWritten(packetType);
+        case TCPTunnelPacketHeaderType::TCP_RECEIVED_DATA:
+            return decodeBytesReceived(packetType);
+        }
+    }
+
+    return {};
+}
+
+const TCPTunnelPacketHeader TCPTunnelPacketHeader::decodeConnectRequest(const TCPTunnelPacketHeaderType& packetType, const QByteArray& data)
+{
     uint16_t port = 0;
-    memcpy(&port, encodedData.mid(sizeof(TCPTunnelPacketHeaderType)).constData(), sizeof(port));
+    memcpy(&port, data.mid(sizeof(TCPTunnelPacketHeaderType)).constData(), sizeof(port));
 
     size_t hostStringSize = 0;
-    memcpy(&hostStringSize, encodedData.mid(sizeof(TCPTunnelPacketHeaderType)+sizeof(port)).constData(), sizeof(hostStringSize));
+    memcpy(&hostStringSize, data.mid(sizeof(TCPTunnelPacketHeaderType)+sizeof(port)).constData(), sizeof(hostStringSize));
 
-    const QByteArray& host = encodedData.mid(sizeof(TCPTunnelPacketHeaderType)+sizeof(port)+sizeof(hostStringSize), hostStringSize);
+    const QByteArray& host = data.mid(sizeof(TCPTunnelPacketHeaderType)+sizeof(port)+sizeof(hostStringSize), hostStringSize);
 
-    return std::make_tuple(packetType, port, hostStringSize, host);
+    TCPTunnelPacketHeader tcpTunnelPacketHeader;
+    tcpTunnelPacketHeader.setPacketType(packetType);
+    tcpTunnelPacketHeader.setHost(host);
+    tcpTunnelPacketHeader.setPort(port);
+    return tcpTunnelPacketHeader;
 }
 
-size_t TCPTunnelPacketHeader::headerSize(const QByteArray& encodedData)
+// TODO: The following functions need some sort of abstraction to prevent copy pasta'ing the same code
+const TCPTunnelPacketHeader TCPTunnelPacketHeader::decodeDisconnectRequest(const TCPTunnelPacketHeaderType& packetType)
 {
-    size_t headerSize = 0;
-
-    const auto& decodedData = TCPTunnelPacketHeader::decode(encodedData);
-    const auto& packetType = std::get<0>(decodedData);
-    const auto& port = std::get<1>(decodedData);
-    const auto& hostStringSize = std::get<2>(decodedData);
-    const auto& host = std::get<3>(decodedData);
-
-    headerSize += sizeof(packetType);
-    headerSize += sizeof(port);
-    headerSize += sizeof(hostStringSize);
-    headerSize += host.length();
-
-    return headerSize;
+    TCPTunnelPacketHeader tcpTunnelPacketHeader;
+    tcpTunnelPacketHeader.setPacketType(packetType);
+    return tcpTunnelPacketHeader;
 }
 
-size_t TCPTunnelPacketHeader::minimalHeaderSize()
+const TCPTunnelPacketHeader TCPTunnelPacketHeader::decodeWriteRequest(const TCPTunnelPacketHeaderType& packetType)
 {
-    size_t minimalHeaderSize = 0;
+    TCPTunnelPacketHeader tcpTunnelPacketHeader;
+    tcpTunnelPacketHeader.setPacketType(packetType);
+    return tcpTunnelPacketHeader;
+}
 
-    const auto& encodedData = TCPTunnelPacketHeader::encode(TCPTunnelPacketHeaderType::TCP_INVALID, {}, 0);
-    const auto& decodedData = TCPTunnelPacketHeader::decode(encodedData);
-    const auto& packetType = std::get<0>(decodedData);
-    const auto& port = std::get<1>(decodedData);
-    const auto& hostStringSize = std::get<2>(decodedData);
-    const auto& host = std::get<3>(decodedData);
+const TCPTunnelPacketHeader TCPTunnelPacketHeader::decodeConnectResponse(const TCPTunnelPacketHeaderType& packetType)
+{
+    TCPTunnelPacketHeader tcpTunnelPacketHeader;
+    tcpTunnelPacketHeader.setPacketType(packetType);
+    return tcpTunnelPacketHeader;
+}
 
-    minimalHeaderSize += sizeof(packetType);
-    minimalHeaderSize += sizeof(port);
-    minimalHeaderSize += sizeof(hostStringSize);
-    minimalHeaderSize += host.length();
+const TCPTunnelPacketHeader TCPTunnelPacketHeader::decodeDisconnectResponse(const TCPTunnelPacketHeaderType& packetType)
+{
+    TCPTunnelPacketHeader tcpTunnelPacketHeader;
+    tcpTunnelPacketHeader.setPacketType(packetType);
+    return tcpTunnelPacketHeader;
+}
 
-    return minimalHeaderSize;
+const TCPTunnelPacketHeader TCPTunnelPacketHeader::decodeTimeout(const TCPTunnelPacketHeaderType& packetType)
+{
+    TCPTunnelPacketHeader tcpTunnelPacketHeader;
+    tcpTunnelPacketHeader.setPacketType(packetType);
+    return tcpTunnelPacketHeader;
+}
+
+const TCPTunnelPacketHeader TCPTunnelPacketHeader::decodeBytesWritten(const TCPTunnelPacketHeaderType& packetType)
+{
+    TCPTunnelPacketHeader tcpTunnelPacketHeader;
+    tcpTunnelPacketHeader.setPacketType(packetType);
+    return tcpTunnelPacketHeader;
+}
+
+const TCPTunnelPacketHeader TCPTunnelPacketHeader::decodeBytesReceived(const TCPTunnelPacketHeaderType& packetType)
+{
+    TCPTunnelPacketHeader tcpTunnelPacketHeader;
+    tcpTunnelPacketHeader.setPacketType(packetType);
+    return tcpTunnelPacketHeader;
 }

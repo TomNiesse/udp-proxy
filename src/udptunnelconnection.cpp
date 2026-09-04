@@ -4,44 +4,69 @@
 #include <QNetworkDatagram>
 #include <QElapsedTimer>
 
-UDPTunnelConnection::UDPTunnelConnection(const UDPTunnelConnectionSettings& udpTunnelConnectionSettings, const QString& name)
+#include <QDebug>
+
+UDPTunnelConnection::UDPTunnelConnection(const UDPTunnelConnectionSettings& senderUdpTunnelConnectionSettings, const UDPTunnelConnectionSettings& receiverUdpTunnelConnectionSettings, const QString& name)
+    : senderUdpTunnelConnectionSettings(senderUdpTunnelConnectionSettings)
+    , receiverUdpTunnelConnectionSettings(receiverUdpTunnelConnectionSettings)
+    , name(name)
 {
-    this->udpTunnelConnectionSettings = std::make_unique<UDPTunnelConnectionSettings>(udpTunnelConnectionSettings.getIngressAddress(), udpTunnelConnectionSettings.getIngressPort(), udpTunnelConnectionSettings.getEgressAddress(), udpTunnelConnectionSettings.getEgressPort());
-    this->name = name;
+    // Create a sender and receiver
+    this->udpTunnelPacketSender = std::make_unique<UDPTunnelPacketSender>(this->senderUdpTunnelConnectionSettings);
+    this->udpTunnelPacketReceiver = std::make_unique<UDPTunnelPacketReceiver>(this->receiverUdpTunnelConnectionSettings);
 
-    const auto& ingressAddress = this->udpTunnelConnectionSettings->getIngressAddress();
-    const auto& ingressPort = this->udpTunnelConnectionSettings->getIngressPort();
-    const auto& egressAddress = this->udpTunnelConnectionSettings->getEgressAddress();
-    const auto& egressPort = this->udpTunnelConnectionSettings->getEgressPort();
+    // When the sender has sent data, emit a signal
+    QObject::connect(this->udpTunnelPacketSender.get(), &UDPTunnelPacketSender::dataSent, this, &UDPTunnelConnection::dataSent);
 
-    this->udpTunnelPacketTransceiver = std::make_unique<UDPTunnelPacketTransceiver>(ingressAddress, ingressPort, egressAddress, egressPort);
+    // When the sender doesn't get a response within the given time, emit a timeout signal
+    QObject::connect(this->udpTunnelPacketSender.get(), &UDPTunnelPacketSender::responseTimeoutOccurred, this, &UDPTunnelConnection::responseTimeoutOccurred);
 
-    QObject::connect(this->udpTunnelPacketTransceiver.get(), &UDPTunnelPacketTransceiver::receivedData, this, &UDPTunnelConnection::receivedData);
+    // When the receiver receives data, emit a signal
+    QObject::connect(this->udpTunnelPacketReceiver.get(), &UDPTunnelPacketReceiver::receivedData, this, &UDPTunnelConnection::receivedData);
 }
 
 UDPTunnelConnection::~UDPTunnelConnection()
 {
-    QObject::disconnect(this->udpTunnelPacketTransceiver.get(), &UDPTunnelPacketTransceiver::receivedData, this, &UDPTunnelConnection::receivedData);
+    QObject::disconnect(this->udpTunnelPacketSender.get(), &UDPTunnelPacketSender::dataSent, this, &UDPTunnelConnection::dataSent);
+    QObject::disconnect(this->udpTunnelPacketSender.get(), &UDPTunnelPacketSender::responseTimeoutOccurred, this, &UDPTunnelConnection::responseTimeoutOccurred);
+    QObject::disconnect(this->udpTunnelPacketReceiver.get(), &UDPTunnelPacketReceiver::receivedData, this, &UDPTunnelConnection::receivedData);
 }
 
-bool UDPTunnelConnection::send(const QByteArray& payload)
+const UDPTunnelConnectionSettings UDPTunnelConnection::getSenderUdpTunnelConnectionSettings() const
 {
-    const auto& payloadChunks = UDPTunnelPacket::split(payload, UDPTUNNEL_PAYLOAD_SIZE);
-    UDPTunnelPacketHeader header;
-    header.setPacketType(UDPTunnelPacketType::UDP_DATA);
-    header.setPacketId(this->packetId);
-    const auto& encodedChunks = UDPTunnelPacket::addHeaders(header, payloadChunks);
-    this->packetId += encodedChunks.size();
-
-    for(const auto& chunk : encodedChunks)
-    {
-        this->udpTunnelPacketTransceiver->send(chunk);
-    }
-
-    return true;
+    return this->udpTunnelPacketSender->getUdpTunnelConnectionSettings();
 }
 
-const UDPTunnelConnectionSettings UDPTunnelConnection::getUdpTunnelConnectionSettings() const
+const UDPTunnelConnectionSettings UDPTunnelConnection::getReceiverUdpTunnelConnectionSettings() const
 {
-    return *this->udpTunnelConnectionSettings;
+    return this->udpTunnelPacketReceiver->getUdpTunnelConnectionSettings();
+}
+
+void UDPTunnelConnection::setSenderUdpTunnelConnectionEgressAddress(const QByteArray& senderUdpTunnelConnectionEgressAddress)
+{
+    this->senderUdpTunnelConnectionSettings.setEgressAddress(senderUdpTunnelConnectionEgressAddress);
+    this->udpTunnelPacketSender->setEgressAddress(senderUdpTunnelConnectionEgressAddress);
+}
+
+void UDPTunnelConnection::setSenderUdpTunnelConnectionEgressPort(const int& senderUdpTunnelConnectionEgressPort)
+{
+    this->senderUdpTunnelConnectionSettings.setEgressPort(senderUdpTunnelConnectionEgressPort);
+    this->udpTunnelPacketSender->setEgressPort(senderUdpTunnelConnectionEgressPort);
+}
+
+void UDPTunnelConnection::setReceiverUdpTunnelConnectionEgressAddress(const QByteArray& receiverUdpTunnelConnectionEgressAddress)
+{
+    this->receiverUdpTunnelConnectionSettings.setEgressAddress(receiverUdpTunnelConnectionEgressAddress);
+    this->udpTunnelPacketReceiver->setEgressAddress(receiverUdpTunnelConnectionEgressAddress);
+}
+
+void UDPTunnelConnection::setReceiverUdpTunnelConnectionEgressPort(const int& receiverUdpTunnelConnectionEgressPort)
+{
+    this->receiverUdpTunnelConnectionSettings.setEgressPort(receiverUdpTunnelConnectionEgressPort);
+    this->udpTunnelPacketReceiver->setEgressPort(receiverUdpTunnelConnectionEgressPort);
+}
+
+void UDPTunnelConnection::sendData(const QByteArray payload)
+{
+    this->udpTunnelPacketSender->sendData(payload);
 }

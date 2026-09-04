@@ -67,6 +67,11 @@ void UDPTunnelConnectionSettings::setEgressPort(const uint16_t& egressPort)
     this->egressPort = egressPort;
 }
 
+const QString UDPTunnelConnectionSettings::toString() const
+{
+    return QString("Ingress address = %1, ingress port = %2, egress address = %3, egress port = %4").arg(this->ingressAddress).arg(this->ingressPort).arg(this->egressAddress).arg(this->egressPort);
+}
+
 // Private
 
 const QByteArray UDPTunnelConnectionSettings::encode(const QByteArray& ingressAddress, const uint16_t& ingressPort, const QByteArray& egressAddress, const uint16_t& egressPort)

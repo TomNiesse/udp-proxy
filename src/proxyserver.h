@@ -3,7 +3,7 @@
 
 #include "udptunnelconnection.h"
 #include "udptunnelconnectionportmanager.h"
-#include "hostconnectionmanager.h"
+#include "tcphostconnectionmanager.h"
 #include <QObject>
 #include <QTcpServer>
 
@@ -19,7 +19,7 @@ class ProxyServer : public QTcpServer
     Q_OBJECT
     Q_DISABLE_COPY_MOVE(ProxyServer)
 public:
-    ProxyServer(const UDPTunnelConnectionSettings& udpTunnelConnectionSettings);
+    ProxyServer(const UDPTunnelConnectionSettings& senderUdpTunnelConnectionSettings, const UDPTunnelConnectionSettings& receiverUdpTunnelConnectionSettings);
 
 private slots:
     void incomingConnection(const qintptr socketDescriptor) override;
@@ -28,7 +28,7 @@ private:
     void communicationThread(const qintptr socketDescriptor, const UDPTunnelConnectionSettings udpTunnelConnectionSettings);
 
     std::unique_ptr<UDPTunnelConnectionPortManager> portManager;
-    std::unique_ptr<HostConnectionManager> hostConnectionManager;
+    std::unique_ptr<TCPHostConnectionManager> hostConnectionManager;
 };
 
 #endif // PROXYSERVER_H

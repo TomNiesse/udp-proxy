@@ -1,18 +1,18 @@
-#ifndef HOSTCONNECTION_H
-#define HOSTCONNECTION_H
+#ifndef PROXYTUNNELHOSTCONNECTION_H
+#define PROXYTUNNELHOSTCONNECTION_H
 
 #include "udptunnelconnection.h"
 #include <QTcpSocket>
 #include <QEventLoop>
 #include <QObject>
 
-class HostConnection : public QObject
+class ProxyTunnelHostConnection : public QObject
 {
     Q_OBJECT
-    Q_DISABLE_COPY_MOVE(HostConnection)
+    Q_DISABLE_COPY_MOVE(ProxyTunnelHostConnection)
 public:
-    explicit HostConnection(const UDPTunnelConnectionSettings& udpTunnelConnectionSettings);
-    ~HostConnection();
+    explicit ProxyTunnelHostConnection(const UDPTunnelConnectionSettings& senderUdpTunnelConnectionSettings, const UDPTunnelConnectionSettings& receiverUdpTunnelConnectionSettings);
+    ~ProxyTunnelHostConnection();
     void connectToHost(const QString& host, const quint16& port);
     void send(const QByteArray& data);
     void disconnect();
@@ -32,8 +32,9 @@ private:
     void handleClientQuit();
 
     QTcpSocket tcpSocket;
-    std::unique_ptr<UDPTunnelConnectionSettings> udpTunnelConnectionSettings;
+    UDPTunnelConnectionSettings senderUdpTunnelConnectionSettings;
+    UDPTunnelConnectionSettings receiverUdpTunnelConnectionSettings;
     std::unique_ptr<UDPTunnelConnection> udpTunnelConnection;
 };
 
-#endif // HOSTCONNECTION_H
+#endif // PROXYTUNNELHOSTCONNECTION_H

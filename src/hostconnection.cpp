@@ -2,68 +2,70 @@
 #include "tcptunnelpacket.h"
 #include <QTimer>
 
-HostConnection::HostConnection(const UDPTunnelConnectionSettings& udpTunnelConnectionSettings)
-{
-    this->udpTunnelConnectionSettings = std::make_unique<UDPTunnelConnectionSettings>(udpTunnelConnectionSettings.getIngressAddress(), udpTunnelConnectionSettings.getIngressPort(), udpTunnelConnectionSettings.getEgressAddress(), udpTunnelConnectionSettings.getEgressPort());
-    this->udpTunnelConnection = std::make_unique<UDPTunnelConnection>(*this->udpTunnelConnectionSettings);
+// TODO: delete this and client connection: they are replaced by ProxyTunnelHost and ProxyTunnelClient
 
-    QObject::connect(this->udpTunnelConnection.get(), &UDPTunnelConnection::receivedData, this, &HostConnection::handleUdpTunnelPacket);
+ProxyTunnelHostConnection::ProxyTunnelHostConnection(const UDPTunnelConnectionSettings& senderUdpTunnelConnectionSettings, const UDPTunnelConnectionSettings& receiverUdpTunnelConnectionSettings)
+    : senderUdpTunnelConnectionSettings(senderUdpTunnelConnectionSettings)
+    , receiverUdpTunnelConnectionSettings(receiverUdpTunnelConnectionSettings)
+{
+    this->udpTunnelConnection = std::make_unique<UDPTunnelConnection>(this->senderUdpTunnelConnectionSettings, this->receiverUdpTunnelConnectionSettings);
+    QObject::connect(this->udpTunnelConnection.get(), &UDPTunnelConnection::receivedData, this, &ProxyTunnelHostConnection::handleUdpTunnelPacket);
 }
 
-HostConnection::~HostConnection()
+ProxyTunnelHostConnection::~ProxyTunnelHostConnection()
 {
-    QObject::disconnect(this->udpTunnelConnection.get(), &UDPTunnelConnection::receivedData, this, &HostConnection::handleUdpTunnelPacket);
+    QObject::disconnect(this->udpTunnelConnection.get(), &UDPTunnelConnection::receivedData, this, &ProxyTunnelHostConnection::handleUdpTunnelPacket);
 }
 
-void HostConnection::connectToHost(const QString& host, const quint16& port)
+void ProxyTunnelHostConnection::connectToHost(const QString& host, const quint16& port)
 {
     TCPTunnelPacketHeader header;
     header.setPacketType(TCPTunnelPacketHeaderType::TCP_OPEN_CONNECTION);
     header.setHost(QByteArray::fromStdString(host.toStdString()));
     header.setPort(port);
-    const auto& packet = TCPTunnelPacket::encode(header, {});
+    // const auto& packet = TCPTunnelPacket::encode(/*header, {}*/);
 
-    this->udpTunnelConnection->send(packet);
+    // this->udpTunnelConnection->sendData(packet);
 }
 
-void HostConnection::send(const QByteArray& data)
+void ProxyTunnelHostConnection::send(const QByteArray& data)
 {
     TCPTunnelPacketHeader header;
     header.setPacketType(TCPTunnelPacketHeaderType::TCP_SEND_DATA);
-    const auto& packet = TCPTunnelPacket::encode(header, data);
+    // const auto& packet = TCPTunnelPacket::encode(/*header, data*/);
 
-    this->udpTunnelConnection->send(packet);
+    // this->udpTunnelConnection->sendData(packet);
 }
 
-void HostConnection::disconnect()
+void ProxyTunnelHostConnection::disconnect()
 {
     TCPTunnelPacketHeader header;
     header.setPacketType(TCPTunnelPacketHeaderType::TCP_CLOSE_CONNECTION);
-    const auto& packet = TCPTunnelPacket::encode(header, {});
+    // const auto& packet = TCPTunnelPacket::encode(/*header, {}*/);
 
-    this->udpTunnelConnection->send(packet);
+    // this->udpTunnelConnection->sendData(packet);
 }
 
-void HostConnection::quit()
+void ProxyTunnelHostConnection::quit()
 {
     TCPTunnelPacketHeader header;
     header.setPacketType(TCPTunnelPacketHeaderType::CLIENT_CLOSE_CONNECTION);
-    const auto& packet = TCPTunnelPacket::encode(header, {});
+    // const auto& packet = TCPTunnelPacket::encode(/*header, {}*/);
 
-    this->udpTunnelConnection->send(packet);
+    // this->udpTunnelConnection->sendData(packet);
 
-    QTimer::singleShot(0, this, [this](){
+    // QTimer::singleShot(0, this, [this](){
         emit this->clientHasQuit();
-    });
+    // });
 }
 
 // Private
 
-void HostConnection::handleUdpTunnelPacket(const QByteArray& data)
+void ProxyTunnelHostConnection::handleUdpTunnelPacket(const QByteArray& data)
 {
-    const auto& packet = TCPTunnelPacket::decode(data);
-    const auto& header = packet.first;
-    const auto& payload = packet.second;
+    const auto& packet = TCPTunnelPacket(data);
+    const auto& header = packet.getHeader();
+    const auto& payload = packet.getPayload();
 
     switch(header.getPacketType())
     {
@@ -84,30 +86,30 @@ void HostConnection::handleUdpTunnelPacket(const QByteArray& data)
     }
 }
 
-void HostConnection::handleTcpConnect()
+void ProxyTunnelHostConnection::handleTcpConnect()
 {
-    QTimer::singleShot(0, this, [this](){
+    // QTimer::singleShot(0, this, [this](){
         emit clientIsConnected();
-    });
+    // });
 }
 
-void HostConnection::handleTcpData(const QByteArray& data)
+void ProxyTunnelHostConnection::handleTcpData(const QByteArray& data)
 {
-    QTimer::singleShot(0, this, [this, data](){
+    // QTimer::singleShot(0, this, [this, data](){
         emit this->receivedData(data);
-    });
+    // });
 }
 
-void HostConnection::handleTcpDisconnect()
+void ProxyTunnelHostConnection::handleTcpDisconnect()
 {
-    QTimer::singleShot(0, this, [this](){
+    // QTimer::singleShot(0, this, [this](){
         emit this->clientWasDisconnected();
-    });
+    // });
 }
 
-void HostConnection::handleClientQuit()
+void ProxyTunnelHostConnection::handleClientQuit()
 {
-    QTimer::singleShot(0, this, [this](){
+    // QTimer::singleShot(0, this, [this](){
         emit this->clientHasQuit();
-    });
+    // });
 }
