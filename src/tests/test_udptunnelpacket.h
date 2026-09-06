@@ -14,15 +14,19 @@ public:
 private slots:
     void testConstructors_data();
     void testConstructors();
-    void testUnitTestFinished(); // TODO: finish the unit test!
 
-    // const UDPTunnelPacketHeader& getHeader() const;
-    // void setHeader(const UDPTunnelPacketHeader& header);
-    // const QByteArray& getPayload() const;
-    // void setPayload(const QByteArray& payload);
-    // const QByteArray encode() const;
+    void testGetHeader_data();
+    void testGetHeader();
+    void testSetHeader_data();
+    void testSetHeader();
+    void testGetPayload_data();
+    void testGetPayload();
+    void testSetPayload_data();
+    void testSetPayload();
+    void testEncodeDecode_data();
+    void testEncodeDecode();
 
-    // const QString toString() const;
+    // TODO: FINISH UNIT TEST!
 
     // static const std::vector<QByteArray> split(const QByteArray& payload, const size_t& chunkSize);
     // static const std::vector<UDPTunnelPacket> addHeaders(const UDPTunnelPacketHeader& header, const std::vector<QByteArray>& splitPayload);

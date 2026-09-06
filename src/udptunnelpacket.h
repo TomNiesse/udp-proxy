@@ -39,6 +39,8 @@ private:
 
     UDPTunnelPacketHeader header;
     QByteArray payload;
+
+    friend class test_udptunnelpacket;
 };
 
 #endif // UDPTUNNELPACKET_H
